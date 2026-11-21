@@ -322,7 +322,18 @@
         const zoomBar = h('div', { class: 'zoombar' },
             h('button', { class: 'zbtn', type: 'button', 'aria-label': 'Verkleinern', onclick: () => setZoom(zoom / 1.5) }, '−'), zLbl,
             h('button', { class: 'zbtn', type: 'button', 'aria-label': 'Vergrößern', onclick: () => setZoom(zoom * 1.5) }, '+'));
-        const pv = h('div', { class: 'pv' }, pages, h('div', { class: 'pvbar' }, pvInfo, zoomBar));
+        /* Schnellleiste direkt unter der Vorschau: neu würfeln und Lösungen ein- und ausblenden, ohne zu scrollen */
+        const shuffleS = schema.find(s => s.t === 'shuffle'), resS = schema.find(s => s.k === 'results');
+        const shBtn = shuffleS ? h('button', { class: 'btn primary', type: 'button', onclick: () => { o[shuffleS.k] = 1 + Math.floor(Math.random() * 99999); changed(); } }, icon('reset'), shuffleS.l) : null;
+        const resCb = resS ? h('input', { type: 'checkbox', onchange: () => { o.results = resCb.checked; changed(); } }) : null;
+        const resLbl = resS ? h('label', { class: 'switch' }, resCb, h('span', null, 'Lösungen eintragen')) : null;
+        const quick = h('div', { class: 'quick' }, shBtn, resLbl);
+        function quickSync() {
+            if (shBtn) shBtn.hidden = !!(shuffleS.show && !shuffleS.show(o));
+            if (resLbl) { resLbl.hidden = !!(resS.show && !resS.show(o)); resCb.checked = !!o.results; }
+            quick.hidden = (!shBtn || shBtn.hidden) && (!resLbl || resLbl.hidden);
+        }
+        const pv = h('div', { class: 'pv' }, pages, quick, h('div', { class: 'pvbar' }, pvInfo, zoomBar));
         /* Zoomen nur hier in der Vorschau: Doppeltippen, zwei Finger, Knöpfe, am Rechner auch Strg + Mausrad.
            Der Punkt unter dem Finger bleibt dabei stehen. */
         let zoom = 1, keep = null;
@@ -507,6 +518,7 @@
             return { d, g };
         });
         function sync() {
+            quickSync();
             for (const r of rows) { r.node.hidden = !!(r.s.show && !r.s.show(o)); r.upd(); }
             for (const { d, g } of groupNodes) d.hidden = g.items.every(s => s.show && !s.show(o));
         }

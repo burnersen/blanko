@@ -52,20 +52,46 @@
         { g: 'Rand und Kopf', k: 'title', t: 'text', l: 'Überschrift', ph: 'z. B. Diktat, Hausaufgabe' },
         { g: 'Farbe', k: 'lc', t: 'color', l: 'Linienfarbe', opts: LINE_COLORS },
         { g: 'Farbe', k: 'lw', t: 'num', l: 'Linienstärke', u: 'mm', min: 0.05, max: 1, step: 0.05 },
-        { g: 'Seitenränder', k: 'mt', t: 'num', l: 'oben', u: 'mm', min: 0, max: 60, step: 1 },
+        { g: 'Seitenränder', k: 'mt', t: 'num', l: 'oben', u: 'mm', min: 4, max: 60, step: 1 },
         { g: 'Seitenränder', k: 'mb', t: 'num', l: 'unten', u: 'mm', min: 12, max: 60, step: 1 },
-        { g: 'Seitenränder', k: 'ml', t: 'num', l: 'links', u: 'mm', min: 0, max: 60, step: 1 },
-        { g: 'Seitenränder', k: 'mr', t: 'num', l: 'rechts', u: 'mm', min: 0, max: 60, step: 1 },
+        { g: 'Seitenränder', k: 'ml', t: 'num', l: 'links', u: 'mm', min: 4, max: 60, step: 1 },
+        { g: 'Seitenränder', k: 'mr', t: 'num', l: 'rechts', u: 'mm', min: 4, max: 60, step: 1 },
     ];
+
+    /** Text in eine Breite einpassen: erst kleiner setzen (bis minS), dann mit „…“ kürzen. Liefert { t, s }. */
+    function fitText(P, text, maxW, size, bold, minS) {
+        text = String(text == null ? '' : text);
+        const w = P.textWidth(text, size, bold);
+        if (w <= maxW || maxW <= 0) return { t: text, s: size };
+        const m = Math.min(size, minS || 2);
+        const s2 = Math.max(m, size * maxW / w);
+        if (P.textWidth(text, s2, bold) <= maxW) return { t: text, s: s2 };
+        let t = text;
+        while (t.length > 1 && P.textWidth(t + '…', m, bold) > maxW) t = t.slice(0, -1);
+        return { t: t.trimEnd() + '…', s: m };
+    }
+    /** Text in Zeilen umbrechen, die höchstens maxW breit sind */
+    function wrap(P, text, maxW, size, bold) {
+        const lines = [];
+        let line = '';
+        for (const word of String(text).split(/\s+/)) {
+            const t = line ? line + ' ' + word : word;
+            if (line && P.textWidth(t, size, bold) > maxW) { lines.push(line); line = word; } else line = t;
+        }
+        if (line) lines.push(line);
+        return lines;
+    }
 
     /* ---------- Fläche für den Inhalt: Seitenränder, Kopfzeile, Überschrift und Korrekturrand ---------- */
     function area(P, fr, o, pi) {
-        let x0 = fr.x + clamp(num(o.ml, 10), 0, fr.w / 3), x1 = fr.x + fr.w - clamp(num(o.mr, 10), 0, fr.w / 3);
-        let y0 = fr.y + clamp(num(o.mt, 10), 0, fr.h / 3);
+        // mindestens 4 mm: näher an der Blattkante kann kaum ein Drucker drucken
+        let x0 = fr.x + clamp(num(o.ml, 10), 4, fr.w / 3), x1 = fr.x + fr.w - clamp(num(o.mr, 10), 4, fr.w / 3);
+        let y0 = fr.y + clamp(num(o.mt, 10), 4, fr.h / 3);
         const y1 = fr.y + fr.h - clamp(num(o.mb, 14), 12, fr.h / 3);
         const ink = '#555555';
         if (o.title) {
-            P.text((x0 + x1) / 2, y0 + 6, o.title, { s: 6, b: true, al: 'c', c: '#222222' });
+            const T = fitText(P, o.title, x1 - x0, 6, true, 3.5);
+            P.text((x0 + x1) / 2, y0 + 6, T.t, { s: T.s, b: true, al: 'c', c: '#222222' });
             y0 += 10;
         }
         if (o.head && o.head !== 'none') {
@@ -317,12 +343,18 @@
                 return;
             }
             const X1 = x0 + cols * dx, Y1 = y0 + rows * s + s / 2, L = [];
-            const t = Math.tan(Math.PI / 6), H = Y1 - y0, span = H + (X1 - x0) * t;
-            if (o.style === 'lines') for (let c = 0; c <= cols; c++) L.push([x0 + c * dx, y0, x0 + c * dx, Y1]);
-            else for (let y = y0; y <= Y1 + 1e-6; y += s / 2) L.push([x0, y, X1, y]);
-            for (let k = -Math.ceil(span / s) - 1; k <= Math.ceil(span / s) + 1; k++) {
-                const yA = y0 + k * s;
-                L.push([x0, yA, X1, yA + (X1 - x0) * t], [x0, yA, X1, yA - (X1 - x0) * t]);
+            if (o.style === 'tri') {
+                // waagerechte Linien im Abstand der Dreieckshöhe, dazu Linien unter 60° und 120°
+                const th = s * Math.sqrt(3) / 2, k60 = 1 / Math.tan(Math.PI / 3), H = Y1 - y0;
+                for (let y = y0; y <= Y1 + 1e-6; y += th) L.push([x0, y, X1, y]);
+                for (let x = x0 - H * k60 - s; x <= X1 + s; x += s) L.push([x, Y1, x + H * k60, y0], [x + H * k60, Y1, x, y0]);
+            } else {
+                const t = Math.tan(Math.PI / 6), span = (Y1 - y0) + (X1 - x0) * t;
+                for (let c = 0; c <= cols; c++) L.push([x0 + c * dx, y0, x0 + c * dx, Y1]);
+                for (let k = -Math.ceil(span / s) - 1; k <= Math.ceil(span / s) + 1; k++) {
+                    const yA = y0 + k * s;
+                    L.push([x0, yA, X1, yA + (X1 - x0) * t], [x0, yA, X1, yA - (X1 - x0) * t]);
+                }
             }
             P.clip(rectPath(x0, y0, X1 - x0, Y1 - y0)).lines(L, st).unclip();
             P.rect(x0, y0, X1 - x0, Y1 - y0, st);
@@ -388,7 +420,7 @@
             { k: 'labels', t: 'chk', l: 'Zahlen an den Achsen' },
         ],
         draw(P, A, o) {
-            const n = +o.n || 1, cols = n === 1 ? 1 : 2, rows = n <= 2 ? n : n / 2, gp = 6;
+            const n = +o.n || 1, q = A.w > A.h, cols = n === 1 ? 1 : q ? (n === 6 ? 3 : 2) : (n === 2 ? 1 : 2), rows = Math.ceil(n / cols), gp = 6;
             const pw = (A.w - (cols - 1) * gp) / cols, ph = (A.h - (rows - 1) * gp) / rows;
             const cell = clamp(num(o.cell, 5), 1, 50), unit = clamp(Math.round(num(o.unit, 2)), 1, 20);
             for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
@@ -494,12 +526,12 @@
             let list = String(o.reihen || '').split(',').map(Number).filter(v => v >= 1 && v <= 20);
             if (!list.length) list = [2];
             const rand = rng(+o.seed * 131 + pi * 17 + 5);
-            const cols = list.length > 1 ? 2 : 1, per = 10;
-            const blocks = list.length;
-            const bpc = Math.ceil(blocks / cols);
+            const blocks = list.length, maxCols = blocks > 1 ? Math.min(blocks, A.w > A.h ? 3 : 2) : 1, per = 10;
+            const bpc = Math.ceil(blocks / maxCols), cols = Math.ceil(blocks / bpc);
             const colW = (A.w - (cols - 1) * 10) / cols;
             const rowH = Math.min(11, (A.h - bpc * 11) / (bpc * per));
-            const h = rowH * .55;
+            const probe = o.font === 'print' ? P.textWidth('100 : 10 =', 14.5) / 10 : P.digitsWidth('100 : 10 =', 10) / 10;
+            const h = Math.min(rowH * .55, (colW - 32) / probe);
             const write = (x, y, s, al) => o.font === 'print' ? P.text(x, y, s, { s: h * 1.45, al, c: '#222222' }) : P.digits(x, y, s, { h, al, c: '#222222' });
             list.forEach((rr, bi) => {
                 const col = Math.floor(bi / bpc), k = bi % bpc;
@@ -575,7 +607,7 @@
         schema: [
             { k: 'range', t: 'seg', l: 'Zahlenraum', opts: [['10', 'bis 10'], ['20', 'bis 20'], ['100', 'bis 100'], ['1000', 'bis 1000']] },
             { k: 'count', t: 'num', l: 'Zahlenstrahlen pro Seite', min: 1, max: 14, step: 1 },
-            { k: 'labels', t: 'sel', l: 'Beschriftung', opts: [['all', 'alle großen Striche'], ['tens', 'einige'], ['ends', 'nur Anfang und Ende'], ['none', 'keine']] },
+            { k: 'labels', t: 'sel', l: 'Beschriftung', opts: [['all', 'viele Zahlen'], ['tens', 'einige Zahlen'], ['ends', 'nur Anfang und Ende'], ['none', 'keine (zum Eintragen)']] },
         ],
         draw(P, A, o) {
             const R = +o.range || 20, cnt = clamp(Math.round(num(o.count, 6)), 1, 20);
@@ -590,8 +622,10 @@
                 for (let v = 0; v <= R; v += step) {
                     const x = x0 + len * v / R, t = v % big === 0 ? 3.2 : v % mid === 0 ? 2.2 : 1.2;
                     L.push([x, y - t, x, y + t]);
-                    const lab = o.labels === 'all' ? v % big === 0 || (R <= 10) : o.labels === 'tens' ? (v === 0 || v === R || (R <= 20 ? v % 5 === 0 : v % (big * (R >= 100 ? 5 : 1)) === 0)) : o.labels === 'ends' ? (v === 0 || v === R) : false;
-                    if (lab) P.digits(x, y + 8.5, String(v), { h: R >= 1000 ? 3.2 : 3.8, al: 'c', c: '#222222' });
+                    // alle: bis 20 jede Zahl, bis 100 jeder Zehner, bis 1000 jeder Hunderter; einige: jeweils die Hälfte bzw. Fünfer
+                    const every = R <= 20 ? 1 : R === 100 ? 10 : 100, some = R <= 10 ? 5 : R <= 20 ? 5 : R === 100 ? 50 : 500;
+                    const lab = o.labels === 'all' ? v % every === 0 : o.labels === 'tens' ? v % some === 0 : o.labels === 'ends' ? (v === 0 || v === R) : false;
+                    if (lab) { const dh = Math.min(R >= 1000 ? 3.2 : 3.8, (len / (R / every)) / (String(R).length * .66) * .9); P.digits(x, y + 8.5, String(v), { h: dh, al: 'c', c: '#222222' }); }
                 }
                 P.lines(L, st);
             }
@@ -671,6 +705,7 @@
             if (op === '+') {
                 a = rint(rand, R > 20 ? 2 : 0, R - 1); b = rint(rand, R > 20 ? 1 : 0, R - a); c = a + b;
                 if (R > 10 && c < R * .25) continue;
+                if (c === 0) continue;
                 if (noCarry && R > 10 && (a % 10) + (b % 10) > 9) continue;
                 if (noCarry && R > 100 && (Math.floor(a / 10) % 10) + (Math.floor(b / 10) % 10) > 9) continue;
             } else if (op === '-') {
@@ -690,14 +725,14 @@
     }
     G.arith = {
         group: 'Rechenaufgaben',
-        def: { ops: '+,-', range: 20, kind: 'result', noCarry: false, count: 30, cols: 3, seed: 5, results: false, font: 'school', title: 'Rechnen', head: 'namedate', lc: '#9a9a9a' },
+        def: { ops: '+,-', range: 20, kind: 'result', noCarry: false, count: 30, cols: 2, seed: 5, results: false, font: 'school', title: 'Rechnen', head: 'namedate', lc: '#9a9a9a' },
         schema: [
             { k: 'ops', t: 'multi', l: 'Rechenarten', opts: [['+', 'Plus'], ['-', 'Minus'], ['*', 'Mal'], [':', 'Geteilt']] },
             { k: 'range', t: 'seg', l: 'Zahlenraum', opts: [['10', 'bis 10'], ['20', 'bis 20'], ['100', 'bis 100'], ['1000', 'bis 1000']] },
             { k: 'kind', t: 'sel', l: 'Aufgabenart', opts: [['result', 'Ergebnis gesucht (3 + 4 = __)'], ['gap', 'Platzhalter (3 + __ = 7)'], ['mixed', 'gemischt']] },
             { k: 'noCarry', t: 'chk', l: 'Ohne Zehnerübergang', show: o => +o.range > 10 && /[+-]/.test(String(o.ops)) },
             { k: 'count', t: 'num', l: 'Aufgaben pro Seite', min: 4, max: 60, step: 1 },
-            { k: 'cols', t: 'seg', l: 'Spalten', opts: [['1', '1'], ['2', '2'], ['3', '3'], ['4', '4']] },
+            { k: 'cols', t: 'seg', l: 'Spalten', opts: [['1', '1'], ['2', '2'], ['3', '3']], hint: 'Im Hochformat höchstens 2, im Querformat höchstens 3. Die Schrift passt sich an.' },
             { k: 'seed', t: 'shuffle', l: 'Neue Aufgaben' },
             { k: 'results', t: 'chk', l: 'Lösungen eintragen (Lösungsblatt)' },
             { k: 'font', t: 'seg', l: 'Schrift', opts: [['school', 'Schulschrift'], ['print', 'Druckschrift']] },
@@ -705,35 +740,42 @@
         draw(P, A, o, pi) {
             const ops = String(o.ops || '+').split(',').filter(x => OPSYM[x]);
             if (!ops.length) ops.push('+');
-            const R = +o.range || 20, n = clamp(Math.round(num(o.count, 30)), 1, 100), cols = clamp(+o.cols || 3, 1, 4);
+            const R = +o.range || 20, n = clamp(Math.round(num(o.count, 30)), 1, 100);
+            const cols = clamp(+o.cols || 2, 1, A.w > A.h ? 3 : 2);
             const rand = rng(+o.seed * 7919 + pi * 104729 + 17), seen = new Set(), list = [];
             for (let i = 0; i < n; i++) {
                 let t;
                 for (let k = 0; k < 30; k++) { t = task(rand, ops[i % ops.length], R, o.noCarry); if (!seen.has(t.join())) break; }
                 seen.add(t.join());
-                const hide = o.kind === 'gap' ? (rand() < .5 ? 0 : 2) : o.kind === 'mixed' ? [0, 2, 3, 3][rint(rand, 0, 3)] : 3;
-                list.push({ t, hide });
+                // welcher Teil fehlt: 0 = erste Zahl, 2 = zweite Zahl, 4 = Ergebnis
+                const hide = o.kind === 'gap' ? (rand() < .5 ? 0 : 2) : o.kind === 'mixed' ? [0, 2, 4, 4][rint(rand, 0, 3)] : 4;
+                list.push({ parts: [t[0], OPSYM[t[1]], t[2], '=', t[3]], hide });
             }
             // gemischte Rechenarten: Reihenfolge durcheinander
             for (let i = list.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }
-            const rows = Math.ceil(n / cols), colW = A.w / cols, rowH = Math.min(20, A.h / rows);
-            const h = clamp(rowH * .42, 2.5, 7), W = writer(P, o.font), digW = W.w('0', h);
-            const blank = Math.max(10, digW * (String(R).length + 1.5));
-            list.forEach(({ t, hide }, i) => {
+            const rows = Math.ceil(n / cols), colW = A.w / cols, rowH = Math.min(20, A.h / rows), pad = 3;
+            // Alles wächst linear mit der Ziffernhöhe: erst bei Höhe 10 messen, dann so groß wie möglich, ohne dass etwas übersteht
+            const W = writer(P, o.font), u = s => W.w(String(s), 10) / 10;
+            const gapU = u('0') * .55, blankU = u('0') * (String(R).length + 1.6);
+            const widthU = it => it.parts.reduce((w, part, k) => w + (k === it.hide ? blankU : u(part)) + (k < 4 ? gapU : 0), 0);
+            const maxU = Math.max(...list.map(widthU));
+            // rechts in jeder Spalte 10 % Luft, damit die nächste Spalte klar getrennt ist
+            const h = Math.min(clamp(rowH * .42, 2.5, 7.5), (colW * .9 - 2 * pad) / maxU);
+            list.forEach((it, i) => {
                 const col = Math.floor(i / rows), row = i % rows;
-                let x = A.x0 + col * colW + 2;
+                let x = A.x0 + col * colW + pad;
                 const y = A.y0 + row * rowH + rowH / 2 + h / 2;
-                const parts = [t[0], OPSYM[t[1]], t[2], '=', t[3]];
-                parts.forEach((part, k) => {
-                    const isHidden = k === (hide === 3 ? 4 : hide);
-                    if (isHidden) {
-                        P.line(x, y + .8, x + blank, y + .8, { w: .3, c: o.lc });
-                        if (o.results) W.put(x + blank / 2, y, String(part), h, 'c', SOL);
-                        x += blank + digW * .6;
+                it.parts.forEach((part, k) => {
+                    if (k === it.hide) {
+                        const bw = blankU * h;
+                        P.line(x, y + .8, x + bw, y + .8, { w: .3, c: o.lc });
+                        if (o.results) W.put(x + bw / 2, y, String(part), h, 'c', SOL);
+                        x += bw;
                     } else {
                         W.put(x, y, String(part), h);
-                        x += W.w(String(part), h) + digW * .6;
+                        x += u(part) * h;
                     }
+                    x += gapU * h;
                 });
             });
         },
@@ -750,11 +792,18 @@
             { k: 'copies', t: 'num', l: 'Zum Nachspuren pro Zeile', min: 0, max: 20, step: 1, hint: 'der Rest der Zeile bleibt frei zum Selberschreiben' },
             { k: 'rowsPer', t: 'num', l: 'Zeilen pro Ziffer', min: 1, max: 5, step: 1 },
         ],
-        draw(P, A, o) {
+        draw(P, A, o, pi) {
             let list = String(o.digits || '').split(',').filter(x => /^\d$/.test(x));
             if (!list.length) list = ['1'];
-            const c = clamp(+o.cell || 10, 4, 30), pitch = c * 2, h = c * .82;
-            const rows = Math.floor((A.h + c) / pitch), cols = Math.floor(A.w / c);
+            const per = clamp(Math.round(num(o.rowsPer, 1)), 1, 10), copies = clamp(Math.round(num(o.copies, 4)), 0, 40);
+            const total = list.length * per;
+            // Alle Ziffern sollen aufs Blatt: notfalls etwas kleinere Kästchen (mindestens 6 mm),
+            // reicht auch das nicht, geht es auf der nächsten Seite weiter
+            let c = clamp(+o.cell || 10, 4, 30);
+            if ((total * 2 - 1) * c > A.h) c = Math.max(Math.min(c, 6), A.h / (total * 2 - 1));
+            const pitch = c * 2, h = c * .82;
+            const fitRows = Math.max(1, Math.floor((A.h + c) / pitch)), rows = Math.min(fitRows, total);
+            const first = total > fitRows ? (pi * fitRows) % total : 0, cols = Math.floor(A.w / c);
             const x0 = A.x0 + (A.w - cols * c) / 2, y0 = A.y0;
             const st = { w: num(o.lw, .2), c: o.lc };
             if (o.grid === 'box') {
@@ -763,10 +812,8 @@
                 for (let r = 0; r <= H / c + 1e-6; r++) L.push([x0, y0 + r * c, x0 + cols * c, y0 + r * c]);
                 P.lines(L, st);
             }
-            const per = clamp(Math.round(num(o.rowsPer, 1)), 1, 10), copies = clamp(Math.round(num(o.copies, 4)), 0, 40);
             for (let r = 0; r < rows; r++) {
-                const d = list[Math.floor(r / per) % list.length];
-                if (Math.floor(r / per) >= list.length) break;
+                const d = list[Math.floor(((first + r) % total) / per)];
                 const base = y0 + r * pitch + c - (c - h) / 2;
                 if (o.grid === 'lines') {
                     P.lines([[x0, base - h, x0 + cols * c, base - h], [x0, base - h / 2, x0 + cols * c, base - h / 2]], { ...st, dash: [1, 1] });
@@ -796,7 +843,7 @@
             { k: 'results', t: 'chk', l: 'Lösungen eintragen', show: o => o.mode !== 'blank' },
         ],
         draw(P, A, o, pi) {
-            const n = +o.count || 6, cols = n <= 6 ? 2 : 3, rand = rng(+o.seed * 3301 + pi * 77 + 9);
+            const n = +o.count || 6, q = A.w > A.h, cols = q ? (n <= 4 ? 2 : n <= 9 ? 3 : 4) : (n <= 6 ? 2 : 3), rand = rng(+o.seed * 3301 + pi * 77 + 9);
             const step = { full: 60, half: 30, quarter: 15, 5: 5, 1: 1 }[o.step] || 30;
             const lab = o.mode === 'blank' ? 0 : 12;
             cells(A, n, cols, 6).forEach(C => {
@@ -858,7 +905,7 @@
             const R = +o.range || 20, n = clamp(Math.round(num(o.count, 6)), 1, 20), rand = rng(+o.seed * 6007 + pi * 131 + 1);
             const W = writer(P, o.font), st = { w: .45, c: o.lc };
             const colorOf = i => o.scheme === 'none' ? '#ffffff' : o.scheme === 'gray' ? (i % 2 ? '#ececec' : '#f6f6f6') : light(numColor(i + 1, 'rainbow'), o.scheme === 'pastel' ? .78 : .62);
-            const cols = n <= 2 ? 1 : n <= 8 ? 2 : 3;
+            const q = A.w > A.h, cols = q ? (n <= 2 ? n : n <= 4 ? 2 : n <= 9 ? 3 : 4) : (n <= 2 ? 1 : n <= 8 ? 2 : 3);
             const C = cells(A, n, cols, 8);
             const cell = (x, y, w, hgt, val, shown, fill) => {
                 P.rect(x, y, w, hgt, { fill, c: o.lc, w: st.w });
@@ -871,7 +918,8 @@
                     // Innenfelder a, b, c in den Ecken, außen die Summen der Nachbarn
                     let a, b, c;
                     for (let t = 0; t < 300; t++) { a = rint(rand, 0, Math.floor(R / 2)); b = rint(rand, 0, Math.floor(R / 2)); c = rint(rand, 0, Math.floor(R / 2)); if (Math.max(a + b, b + c, a + c) <= R && a + b + c > R * .3) break; }
-                    const s = Math.min(B.w, B.h * 1.1) * .78, cx = B.x + B.w / 2, hgt = s * Math.sqrt(3) / 2, top = B.y + (B.h - hgt) / 2 + 2;
+                    // Platz für das Dreieck samt Außenfeldern: seitlich je etwa 0,25 s, unten etwa 0,35 s
+                    const s = Math.min(B.w / 1.55, B.h / 1.25), cx = B.x + B.w / 2, hgt = s * Math.sqrt(3) / 2, top = B.y + (B.h - hgt - s * .33) / 2;
                     const V = [[cx, top], [cx - s / 2, top + hgt], [cx + s / 2, top + hgt]];
                     P.polyline(V, { w: .6, c: o.lc, fill: colorOf(idx) }, true);
                     const g = [cx, top + hgt * 2 / 3], box = s * .19;
@@ -897,12 +945,16 @@
                 let base = [];
                 const weights = [];
                 for (let i = 0; i < L; i++) { let w = 1; for (let k = 0; k < i; k++) w = w * (L - 1 - k) / (k + 1); weights.push(Math.round(w)); }
-                for (let t = 0; t < 400; t++) {
+                let ok = null;
+                for (let t = 0; t < 400 && !ok; t++) {
                     const max = Math.max(1, Math.floor(R / weights.reduce((x, y) => x + y, 0) * 1.8));
                     base = Array.from({ length: L }, () => rint(rand, R > 10 ? 1 : 0, max));
                     const top = base.reduce((s, v, i) => s + v * weights[i], 0);
-                    if (top <= R && top >= R * .35) break;
+                    if (top <= R && top >= R * .35) ok = base;
+                    else if (top <= R && !ok) ok = null;
                 }
+                // Sicherheitsnetz: die Spitze darf nie über dem Zahlenraum liegen
+                if (!ok) { base = base.map(() => 0); base[0] = 1; }
                 const rowsV = [base];
                 for (let r = 1; r < L; r++) rowsV.push(rowsV[r - 1].slice(1).map((v, i) => v + rowsV[r - 1][i]));
                 const shown = rowsV.map((row, r) => row.map(() => r === 0));
@@ -945,10 +997,12 @@
                 }
                 return;
             }
-            const [rw, rhh] = String(o.ratio || '16:9').split(':').map(Number), tl = clamp(Math.round(num(o.tl, 2)), 0, 12), lp = 7;
+            const [rw, rhh] = String(o.ratio || '16:9').split(':').map(Number), tl = clamp(Math.round(num(o.tl, 2)), 0, 12);
             const cw = (A.w - (cols - 1) * g) / cols, cellH = (A.h - (rows - 1) * g) / rows;
+            // Linienabstand 7 mm, bei wenig Platz enger; das Bild bekommt mindestens 40 % der Zelle
+            const lp = tl ? Math.min(7, cellH * .6 / tl) : 7;
             let fw = cw, fh = cw * rhh / rw;
-            if (fh + tl * lp > cellH) { fh = Math.max(10, cellH - tl * lp); fw = Math.min(cw, fh * rw / rhh); }
+            if (fh + tl * lp > cellH) { fh = cellH - tl * lp; fw = Math.min(cw, fh * rw / rhh); }
             for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
                 const x = A.x0 + c * (cw + g) + (cw - fw) / 2, y = A.y0 + r * (cellH + g);
                 P.rect(x, y, fw, fh, st);
@@ -1098,12 +1152,13 @@
     /* ---------- Druckertest: druckt der Drucker in Originalgröße? ---------- */
     G.test = {
         group: 'Druckertest',
+        fixed: { fmt: 'A4', ori: 'h', pages: 1 },   // das 10-cm-Lineal braucht ein ganzes A4-Blatt
         def: { title: 'Druckertest: stimmt die Größe?' },
         schema: [],
         draw(P, A, o) {
             const x = A.x0 + 5, y = A.y0 + 22, ink = '#222222';
-            P.text(x, A.y0 + 6, 'Leg ein Lineal an die Linie unten. Ist sie genau 10 cm lang, druckt dein Drucker in Originalgröße.', { s: 3.4, c: ink });
-            P.text(x, A.y0 + 11, 'Ist sie kürzer: im Druckfenster „Tatsächliche Größe“ oder „100 %“ wählen statt „An Seite anpassen“.', { s: 3.4, c: ink });
+            const intro = wrap(P, 'Leg ein Lineal an die Linie unten. Ist sie genau 10 cm lang, druckt dein Drucker in Originalgröße. Ist sie kürzer: im Druckfenster „Tatsächliche Größe“ oder „100 %“ wählen statt „An Seite anpassen“.', A.x1 - x, 3.2);
+            intro.slice(0, 4).forEach((l, i) => P.text(x, A.y0 + 5 + i * 4.3, l, { s: 3.2, c: ink }));
             const ruler = (x0, y0, vertical) => {
                 const L = [];
                 for (let i = 0; i <= 100; i++) {
@@ -1127,7 +1182,7 @@
                 P.rect(m, m, pw - 2 * m, ph - 2 * m, { w: .3, c, dash: [2, 1.5] });
                 P.text(pw - m - 2, ph * .62 + i * 5, m + ' mm vom Rand', { s: 2.8, c, al: 'r' });
             });
-            P.text(x, y + 135, 'Die farbigen Rahmen zeigen, wie nah dein Drucker an die Blattkante kommt: was fehlt, kann er nicht drucken.', { s: 3, c: '#555555' });
+            wrap(P, 'Die farbigen Rahmen zeigen, wie nah dein Drucker an die Blattkante kommt: was fehlt, kann er nicht drucken.', A.x1 - x, 3).forEach((l, i) => P.text(x, y + 135 + i * 4, l, { s: 3, c: '#555555' }));
         },
     };
 
@@ -1178,13 +1233,15 @@
             P.lines(L, st);
             if (o.thead) P.line(A.x0, A.y0 + headH, A.x1, A.y0 + headH, { w: st.w * 2.2, c: o.lc });
             const hs = Math.min(4.2, headH * .42);
-            const fitS = (t, size, w, bold) => { const tw = P.textWidth(t, size, bold); return tw > w ? Math.max(1.2, size * w / tw) : size; };
-            if (o.thead) for (let c = 0; c < cols; c++) if (heads[c]) { const fs = fitS(heads[c], hs, xs[c + 1] - xs[c] - 2, true); P.text((xs[c] + xs[c + 1]) / 2, A.y0 + headH / 2 + fs * .36, heads[c], { s: fs, b: true, al: 'c', c: '#222222' }); }
+            // alle Spaltentitel gleich groß: so groß, wie der engste es erlaubt (nicht kleiner als 2,4 mm, dann wird gekürzt)
+            let hsAll = hs;
+            if (o.thead) for (let c = 0; c < cols; c++) if (heads[c]) hsAll = Math.min(hsAll, Math.max(2.4, fitText(P, heads[c], xs[c + 1] - xs[c] - 2, hs, true, .5).s));
+            if (o.thead) for (let c = 0; c < cols; c++) if (heads[c]) { const T = fitText(P, heads[c], xs[c + 1] - xs[c] - 2, hsAll, true, hsAll); P.text((xs[c] + xs[c + 1]) / 2, A.y0 + headH / 2 + T.s * .36, T.t, { s: T.s, b: true, al: 'c', c: '#222222' }); }
             const labels = splitList(o.rowLabels).filter((v, i, a) => a.length > 1 || v);
             const ls = Math.min(3.8, rowH * .42);
             for (let r = 0; r < rows; r++) {
                 const t = o.num ? (r + 1) + '.' : labels[r] || '';
-                if (t) { const fs = fitS(t, ls, xs[1] - xs[0] - 3); P.text(xs[0] + 1.8, A.y0 + headH + r * rowH + rowH / 2 + fs * .36, t, { s: fs, c: '#333333' }); }
+                if (t) { const T = fitText(P, t, xs[1] - xs[0] - 3, ls, false, 1.8); P.text(xs[0] + 1.8, A.y0 + headH + r * rowH + rowH / 2 + T.s * .36, T.t, { s: T.s, c: '#333333' }); }
             }
         },
     };
@@ -1199,7 +1256,7 @@
         ],
         draw(P, A, o) {
             P.rect(A.x0, A.y0, A.w, A.h, { w: Math.max(.4, num(o.lw, .2) * 2.2), c: o.lc, r: num(o.boxR, 3) });
-            if (o.boxLabel) P.text(A.x0 + 3, A.y0 + 6, o.boxLabel, { s: 3.6, c: '#777777' });
+            if (o.boxLabel) { const T = fitText(P, o.boxLabel, A.w - 6, 3.6, false, 2.4); P.text(A.x0 + 3, A.y0 + 6, T.t, { s: T.s, c: '#777777' }); }
         },
     };
 
@@ -1267,7 +1324,9 @@
         draw(P, A, o, pi) {
             const n = clamp(Math.round(num(o.zones, 1)), 1, 3), gap = n > 1 ? clamp(num(o.zgap, 8), 0, 60) : 0;
             const H = A.h - gap * (n - 1);
-            const hs = n === 1 ? [H] : n === 2 ? [H * clamp(num(o.z1_h, 50), 5, 95) / 100] : [H * clamp(num(o.z1_h, 50), 5, 90) / 100, H * clamp(num(o.z2_h, 30), 5, 90) / 100];
+            let p1 = clamp(num(o.z1_h, 50), 5, 90), p2 = n === 3 ? clamp(num(o.z2_h, 30), 5, 85) : 0;
+            if (p1 + p2 > 90) { const k = 90 / (p1 + p2); p1 *= k; p2 *= k; }   // der letzte Bereich behält mindestens 10 %
+            const hs = n === 1 ? [H] : n === 2 ? [H * p1 / 100] : [H * p1 / 100, H * p2 / 100];
             if (n > 1) hs.push(Math.max(5, H - hs.reduce((a, b) => a + b, 0)));
             let y = A.y0;
             for (let i = 1; i <= n; i++) {
@@ -1307,7 +1366,8 @@
         const g = genOf(paper);
         const own = (g.schema || []).map(s => ({ ...s, g: s.g || g.group }));
         // Papiere, die ihre Seitenzahl selbst bestimmen (Kalender), brauchen den Regler „Seiten“ nicht
-        return own.concat(g.pages ? COMMON_SCHEMA.filter(s => s.k !== 'pages') : COMMON_SCHEMA);
+        const drop = k => (g.pages && k === 'pages') || (g.fixed && k in g.fixed);
+        return own.concat(COMMON_SCHEMA.filter(s => !drop(s.k)));
     }
 
     /** Genormte Werte, die vom Original abweichen */
@@ -1337,6 +1397,7 @@
         opt = opt || {};
         o = clean(paper, o);
         const g = genOf(paper), doc = BLPdf.doc();
+        if (g.fixed) o = { ...o, ...g.fixed };
         const two = o.fmt === 'A5x2';
         const [fw, fh] = FORMATS[two ? 'A5' : o.fmt] || FORMATS.A4;
         const q = o.ori === 'q';
@@ -1361,12 +1422,13 @@
                 // Schnittlinie mit Schere
                 const cut = { w: .2, c: '#b0b0b0', dash: [2, 2] };
                 if (q) P.line(4, 148.5, 206, 148.5, cut).text(6, 147.3, 'hier schneiden', { s: 2.2, c: '#999999' });
-                else P.line(148.5, 4, 148.5, 206, cut).text(150, 8, 'hier schneiden', { s: 2.2, c: '#999999' });
+                else P.line(148.5, 4, 148.5, 199, cut).text(150, 8, 'hier schneiden', { s: 2.2, c: '#999999' });
             }
         }
         return doc;
     }
 
     self.BLPapers = { options, schema, changed, clean, build, toBuild, gens: G, COMMON, LINE_COLORS, numColor,
-        helpers: { clamp, num, mix, light, darkC, rng, RAINBOW, writer, area, rectPath, cells } };
+        helpers: { clamp, num, mix, light, darkC, rng, RAINBOW, writer, area, rectPath, cells, fitText, wrap },
+        _test: { task } };   // nur für die automatischen Prüfungen
 })();

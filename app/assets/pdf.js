@@ -30,9 +30,11 @@
     };
     const CSS_FONT = 'Helvetica, Arial, "Liberation Sans", "Nimbus Sans", sans-serif';
     // Zeichen, die WinAnsi zwischen 128 und 159 anders belegt als Unicode
-    const WIN = { '€': 128, '‚': 130, '„': 132, '…': 133, '‰': 137, '‹': 139, '‘': 145, '’': 146, '“': 147, '”': 148, '•': 149, '–': 150, '—': 151, '™': 153, '›': 155 };
+    const WIN = { '−': 150, '€': 128, '‚': 130, '„': 132, '…': 133, '‰': 137, '‹': 139, '‘': 145, '’': 146, '“': 147, '”': 148, '•': 149, '–': 150, '—': 151, '™': 153, '›': 155 };
     const UNWIN = {};
-    for (const ch in WIN) UNWIN[WIN[ch]] = ch;
+    for (const ch in WIN) if (ch !== '−') UNWIN[WIN[ch]] = ch;   // das Minus wird als Halbgeviertstrich gedruckt
+    /** Zum Prüfen: hier landen Zeichen, die nicht gedruckt werden können (sollte immer leer bleiben) */
+    const warnings = [];
 
     /** Text in WinAnsi-Bytes. Unbekanntes ohne Akzent, sonst weg. */
     function enc(s) {
@@ -164,11 +166,14 @@
                 dots(list, r, c) { const d = []; for (const p of list) d.push(...ellipse(p[0], p[1], r, r)); return P.path(d, { fill: c || '#000000' }); },
                 text(x, y, s, o) {
                     o = st(o);
+                    if (s == null || (typeof s === 'number' && !isFinite(s))) warnings.push('Text fehlt (' + s + ')');
                     const t = enc(s);
+                    const want = String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+                    if (t.trim().length < [...want].length) warnings.push('Zeichen fehlt in „' + want + '“');
                     if (!t) return P;
                     const size = o.s || 4, bold = !!o.b, tw = textWidth(t, size, bold);
                     const xx = o.al === 'r' ? x - tw : o.al === 'c' ? x - tw / 2 : x;
-                    ops.push({ k: 't', x: xx, y, s: t, size, b: bold, c: o.c || '#000000' });
+                    ops.push({ k: 't', x: xx, y, s: t, size, b: bold, c: o.c || '#000000', box: [xx, y - size * .72, xx + tw, y + size * .2] });
                     return P;
                 },
                 textWidth: (s, size, bold) => textWidth(enc(s), size, bold),
@@ -178,6 +183,7 @@
                     let xx = o.al === 'r' ? x - digitsWidth(s, hh) : o.al === 'c' ? x - digitsWidth(s, hh) / 2 : x;
                     const d = [], dots = [];
                     for (const ch of chars) {
+                        if (!glyph(ch)) warnings.push('Schulschrift kennt „' + ch + '“ nicht');
                         const g = glyph(ch) || glyph('?');
                         for (const sg of g.segs) {
                             const out = [sg[0]];
@@ -190,6 +196,9 @@
                     const lw = o.w || hh * .1;
                     // dash: gepunktete Ziffern zum Nachspuren (runde Enden machen aus kurzen Strichen Punkte)
                     if (d.length) P.path(d, { c: o.c || '#000000', w: lw, cap: 'round', join: 'round', dash: o.dash ? [.01, lw * 2.4] : null });
+                    // Umriss merken (für die automatische Prüfung auf Überlappungen)
+                    const x0 = o.al === 'r' ? x - digitsWidth(s, hh) : o.al === 'c' ? x - digitsWidth(s, hh) / 2 : x;
+                    if (d.length) { ops[ops.length - 1].box = [x0, y - hh, x0 + digitsWidth(s, hh), y + hh * .15]; ops[ops.length - 1].str = String(s); }
                     if (dots.length) P.dots(dots, lw * .75, o.c || '#000000');
                     return P;
                 },
@@ -324,5 +333,5 @@
         return { page, pages, size: i => pages[i] ? { w: pages[i].w, h: pages[i].h } : null, draw, bytes, get count() { return pages.length; } };
     }
 
-    self.BLPdf = { doc, ellipse, arc, roundRect, BRAND_L, BRAND_R };
+    self.BLPdf = { doc, ellipse, arc, roundRect, BRAND_L, BRAND_R, warnings, enc };
 })();

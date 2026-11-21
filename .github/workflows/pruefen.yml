@@ -1,0 +1,20 @@
+# Prüft bei jeder Änderung alle Papiere (tools/pruefen.js): Darstellung in allen Formaten, Rechenlogik, Kalender.
+name: Prüfen
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  pruefen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Alle Papiere prüfen
+        run: node tools/pruefen.js
+      - name: PHP-Syntax
+        run: for f in index.php app/lib/*.php app/views/*.php tools/*.php; do php -l "$f"; done

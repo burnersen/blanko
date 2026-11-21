@@ -7,7 +7,7 @@
    Meldet sich als Generator „cal“ bei papers.js an. */
 (function () {
     'use strict';
-    const BP = self.BLPapers, { clamp, num, light, darkC } = BP.helpers;
+    const BP = self.BLPapers, { clamp, num, light, darkC, fitText: fit } = BP.helpers;
 
     const MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
     const WD = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
@@ -155,7 +155,9 @@
     /* ---------- Zeichnen ---------- */
     const monthColor = (m, o) => o.scheme === 'one' ? o.cMain : o.scheme === 'gray' ? '#5f6670' : o.scheme === 'bw' ? '#222222' : MONTH12[m % 12];
     function header(P, x, y, w, h, text, col, o, al, size) {
-        const fs = size || Math.min(h * .62, 9);
+        const T = fit(P, text, w - (al === 'l' ? h * .7 : 3), size || Math.min(h * .62, 9), true, 1.8);
+        const fs = T.s;
+        text = T.t;
         if (o.headStyle === 'band') {
             P.rect(x, y, w, h, { fill: col, r: o.shape === 'square' || o.shape === 'plain' ? 0 : Math.min(2.5, h / 3) });
             P.text(al === 'l' ? x + h * .35 : x + w / 2, y + h / 2 + fs * .36, text, { s: fs, b: true, al: al || 'c', c: '#ffffff' });
@@ -221,21 +223,20 @@
     }
 
     /** Legende: Farben und Liste der Feiertage */
-    function legend(P, A, y0, years, o) {
+    function legend(P0, A, y0, years, o, dry) {
+        // dry: nur ausmessen, nichts zeichnen
+        const P = dry ? new Proxy(P0, { get: (t, k) => k === 'text' || k === 'rect' || k === 'circle' || k === 'path' ? () => P : t[k] }) : P0;
         const land = o.land || 'de', items = [];
         if (o.hol) items.push([light(o.cHol, .78), 'Feiertag']);
         if (o.bridge) items.push([o.cBridge, 'Brückentag']);
         if (o.fer && land !== 'de') items.push([o.cFer, 'Schulferien']);
         items.push([o.cWe, 'Wochenende']);
         let x = A.x0, y = y0 + 3;
-        for (const [c, t] of items) {
-            P.rect(x, y - 2.4, 3.2, 3.2, { fill: c, r: o.shape === 'circle' ? 1.6 : o.shape === 'round' ? .8 : 0 });
-            P.text(x + 4.4, y, t, { s: 2.6, c: '#444444' });
-            x += 8 + P.textWidth(t, 2.6);
-        }
-        if (o.moon) { moonIcon(P, x + 1.6, y - .8, 1.4, 0); P.text(x + 4, y, 'Neumond', { s: 2.6, c: '#444444' }); x += 6 + P.textWidth('Neumond', 2.6) + 2; moonIcon(P, x + 1.6, y - .8, 1.4, 2); P.text(x + 4, y, 'Vollmond', { s: 2.6, c: '#444444' }); }
+        const chip = (w, drawIt) => { if (x + w > A.x1 && x > A.x0) { x = A.x0; y += 4.2; } drawIt(x); x += w; };
+        for (const [c, t] of items) chip(8 + P.textWidth(t, 2.6), x => { P.rect(x, y - 2.4, 3.2, 3.2, { fill: c, r: o.shape === 'circle' ? 1.6 : o.shape === 'round' ? .8 : 0 }); P.text(x + 4.4, y, t, { s: 2.6, c: '#444444' }); });
+        if (o.moon) for (const [ph, t] of [[0, 'Neumond'], [2, 'Vollmond']]) chip(8 + P.textWidth(t, 2.6), x => { moonIcon(P, x + 1.6, y - .8, 1.4, ph); P.text(x + 4.4, y, t, { s: 2.6, c: '#444444' }); });
         const note = land === 'de' ? 'Bundesweite Feiertage' : 'Feiertage ' + LANDNAME[land];
-        P.text(A.x1, y, note, { s: 2.4, al: 'r', c: '#777777' });
+        if (x + P.textWidth(note, 2.4) + 4 <= A.x1) P.text(A.x1, y, note, { s: 2.4, al: 'r', c: '#777777' });
         y += 4.6;
         if (o.hol && o.legend) {
             const parts = [];
@@ -255,18 +256,18 @@
             const last = years[years.length - 1];
             const txt = FER.bis ? 'Schulferien ' + LANDNAME[land] + ' laut Kultusministerkonferenz (Stand ' + FER.stand + '), hinterlegt bis ' + fmtDate(FER.bis) + '.'
                 + (FER.bis < last + '-12-31' ? ' Spätere Ferien sind noch nicht veröffentlicht.' : '') : 'Keine Schulferien hinterlegt.';
-            P.text(A.x0, y, txt, { s: 2.3, c: '#777777' });
-            y += 3.2;
+            for (const l of BP.helpers.wrap(P, txt, A.w, 2.3)) { P.text(A.x0, y, l, { s: 2.3, c: '#777777' }); y += 3.1; }
         }
         return y;
     }
-    const legendH = o => (o.legend && o.hol ? 14 : 5) + (o.fer && o.land !== 'de' ? 3.5 : 0);
+    const legendH = (P, A, years, o) => legend(P, A, 0, years, o, true) + 1;
 
     /** Titel oben: eigener Titel aus „Überschrift“ oder automatisch */
     function title(P, A, text, o, col) {
         const t = o.title ? null : text;   // eigener Titel wird schon von area() gesetzt
         if (!t) return A.y0;
-        P.text(A.x0, A.y0 + 7.5, t, { s: 9, b: true, c: col || '#222222' });
+        const T = fit(P, t, A.w, 9, true, 4);
+        P.text(A.x0, A.y0 + 7.5, T.t, { s: T.s, b: true, c: col || '#222222' });
         return A.y0 + 12;
     }
 
@@ -275,7 +276,7 @@
         const y = +o.year + pi, sm = (+o.startMonth || 1) - 1;
         const label = sm === 7 ? 'Schuljahr ' + y + '/' + String(y + 1).slice(2) : sm === 0 ? 'Kalender ' + y : y + '/' + String(y + 1).slice(2);
         let top = title(P, A, label, o, o.scheme === 'one' ? o.cMain : '#222222');
-        const lh = legendH(o);
+        const lh = legendH(P, A, sm ? [y, y + 1] : [y], { ...o, _range: [D(y, sm, 1), D(y + 1, sm, 0)] });
         const q = A.w > A.h, cols = q ? 4 : 3, rows = 12 / cols, gx = 5, gy = 4;
         const W = (A.w - (cols - 1) * gx) / cols, H = (A.y1 - lh - top - (rows - 1) * gy) / rows;
         o._showYear = sm !== 0;
@@ -293,7 +294,7 @@
         const start = sm + pi * per;
         const label = 'Jahresplaner ' + (sm === 0 && per === 12 ? y : y + '/' + String(y + 1).slice(2));
         let top = title(P, A, label, o, o.scheme === 'one' ? o.cMain : '#222222');
-        const lh = legendH(o), lab = 20, cw = (A.w - lab) / 31, hh = 5;
+        const lh = legendH(P, A, [y, y + 1], { ...o, _range: [D(y + Math.floor(start / 12), start % 12, 1), D(y + Math.floor((start + per) / 12), (start + per) % 12, 0)] }), lab = 20, cw = (A.w - lab) / 31, hh = 5;
         const rh = (A.y1 - lh - top - hh) / per;
         for (let d = 1; d <= 31; d++) P.text(A.x0 + lab + (d - .5) * cw, top + 3.6, String(d), { s: Math.min(2.8, cw * .5), al: 'c', b: true, c: '#555555' });
         const years = new Set();
@@ -353,7 +354,7 @@
                 num2(P, x + 2, yy + fs * 1.25, String(i + 1), fs, o, 'l', dayInk(I, o));
             }
             let ty = yy + rh - 1.6;
-            const small = (t, c) => { P.text(x + 1.6, ty, t, { s: Math.min(2.5, cw * .11), c }); ty -= 3; };
+            const small = (t, c) => { const T = fit(P, t, cw - 3, Math.min(2.5, cw * .11), false, 1.6); P.text(x + 1.6, ty, T.t, { s: T.s, c }); ty -= 3; };
             if (I.hol && o.holNames) small(I.hol, darkC(o.cHol, .1));
             if (I.bridge) small('Brückentag', darkC(o.cBridge, .5));
             if (I.fer && (i === 0 || !info(addDays(d, -1), o).fer || c === 0)) small(I.fer, '#8a6d1a');
@@ -384,7 +385,7 @@
         names.forEach((t, i) => {
             const c = o.scheme === 'rainbow' ? MONTH12[(m + i * 3) % 12] : col;
             P.rect(A.x0 + dw + i * nw + .4, top, nw - .8, nh, { fill: light(c, .7), r: o.shape === 'square' || o.shape === 'plain' ? 0 : 1.5 });
-            if (t) P.text(A.x0 + dw + i * nw + nw / 2, top + nh * .68, t, { s: Math.min(4, nh * .55), b: true, al: 'c', c: darkC(c, .45) });
+            if (t) { const T = fit(P, t, nw - 2, Math.min(4, nh * .55), true, 1.8); P.text(A.x0 + dw + i * nw + nw / 2, top + nh * .68, T.t, { s: T.s, b: true, al: 'c', c: darkC(c, .45) }); }
         });
         const L = [], fs = Math.min(3.2, rh * .55);
         for (let i = 0; i < n; i++) {
@@ -393,7 +394,10 @@
             if (fill) P.rect(A.x0, yy, A.w, rh, { fill: o.shape === 'plain' ? '#ffffff' : fill });
             P.text(A.x0 + 1.5, yy + rh / 2 + fs * .36, WD[wd(d)] + ' ' + (i + 1) + '.', { s: fs, b: true, c: dayInk(I, o) });
             const extra = I.hol || (I.bridge ? 'Brückentag' : '') || (I.fer && (i === 0 || !info(addDays(d, -1), o).fer) ? I.fer : '');
-            if (extra) P.text(A.x0 + 1.5 + P.textWidth(WD[wd(d)] + ' 30.', fs, true) + 1.5, yy + rh / 2 + fs * .3, extra, { s: Math.min(2.2, fs * .75), c: I.hol ? o.cHol : '#777777' });
+            if (extra) {
+                const ex = A.x0 + 1.5 + P.textWidth(WD[wd(d)] + ' 30.', fs, true) + 1.5, T = fit(P, extra, A.x0 + dw - (o.moon ? 5 : 1) - ex, Math.min(2.2, fs * .75), false, 1.4);
+                P.text(ex, yy + rh / 2 + fs * .3, T.t, { s: T.s, c: I.hol ? o.cHol : '#777777' });
+            }
             if (I.moon != null) moonIcon(P, A.x0 + dw - 2.5, yy + rh / 2, Math.min(1.3, rh * .25), I.moon);
             L.push([A.x0, yy + rh, A.x1, yy + rh]);
         }
@@ -417,9 +421,10 @@
         const s0 = startDate(o), mon = addDays(s0, -wd(s0) + pi * 7), sun = addDays(mon, 6);
         const col = monthColor(mon.getUTCMonth(), o);
         const head = (o.title ? o.title + ' · ' : '') + 'KW ' + isoWeek(mon) + ' · ' + mon.getUTCDate() + '. ' + MONTHS[mon.getUTCMonth()] + (mon.getUTCFullYear() !== sun.getUTCFullYear() ? ' ' + mon.getUTCFullYear() : '') + ' bis ' + sun.getUTCDate() + '. ' + MONTHS[sun.getUTCMonth()] + ' ' + sun.getUTCFullYear();
-        P.text(A.x0, A.y0 + 7, head, { s: 6, b: true, c: o.scheme === 'bw' ? '#222222' : darkC(col, .1) });
+        const HT = fit(P, head, A.w, 6, true, 3);
+        P.text(A.x0, A.y0 + 7, HT.t, { s: HT.s, b: true, c: o.scheme === 'bw' ? '#222222' : darkC(col, .1) });
         const top = A.y0 + 11, H = A.y1 - top, lay = o.weekLayout;
-        const sub = (x, y, w, t) => { if (t) P.text(x, y, t, { s: 2.5, c: '#777777' }); };
+        const sub = (x, y, w, t) => { if (t) { const T = fit(P, t, w - 2, 2.5, false, 1.5); P.text(x, y, T.t, { s: T.s, c: '#777777' }); } };
         if (lay === 'columns') {
             const hf = clamp(Math.round(num(o.hFrom, 7)), 0, 23), ht = clamp(Math.round(num(o.hTo, 20)), hf + 1, 24), lab = 8, cw = (A.w - lab) / 7, hh = 9, rows = ht - hf, rh = (H - hh - 4) / rows;
             for (let i = 0; i < 7; i++) {
@@ -450,7 +455,7 @@
                 const d = addDays(mon, b), { I, sub: s } = dayHead(P, x, y, bw, hh, d, o);
                 const f = dayFill(I, o);
                 if (f && o.shape !== 'plain') P.rect(x, y + hh, bw, bh - hh, { fill: light(f, .45) });
-                if (s) P.text(x + bw - 1.5, y + hh + 3, s, { s: 2.5, al: 'r', c: I.hol ? o.cHol : '#777777' });
+                if (s) { const T = fit(P, s, bw - 3, 2.5, false, 1.5); P.text(x + bw - 1.5, y + hh + 3, T.t, { s: T.s, al: 'r', c: I.hol ? o.cHol : '#777777' }); }
                 if (I.moon != null) moonIcon(P, x + bw - 3, y + hh / 2, 1.3, I.moon);
             }
             const L = [];
@@ -463,9 +468,16 @@
     function drawDay(P, A, o, pi) {
         const d = addDays(startDate(o), pi), I = info(d, o), col = I.hol ? o.cHol : monthColor(d.getUTCMonth(), o);
         const hh = 13;
-        header(P, A.x0, A.y0, A.w, hh, WDL[wd(d)] + ', ' + d.getUTCDate() + '. ' + MONTHS[d.getUTCMonth()] + ' ' + d.getUTCFullYear(), col, o, 'l', 6.5);
+        const dTitle = WDL[wd(d)] + ', ' + d.getUTCDate() + '. ' + MONTHS[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
         const sub = [o.kw ? 'KW ' + isoWeek(d) : '', I.hol || '', I.bridge ? 'Brückentag' : '', I.fer || ''].filter(Boolean).join('  ·  ');
-        P.text(A.x1 - 2, A.y0 + hh / 2 + 1.2, sub, { s: 3, al: 'r', c: o.headStyle === 'band' ? '#ffffff' : '#666666' });
+        // Titel links (höchstens 60 % der Breite, wenn rechts noch etwas steht), Zusatz rechts im Rest
+        const TT = fit(P, dTitle, (sub ? A.w * .6 : A.w) - hh * .7, 6.5, true, 3);
+        header(P, A.x0, A.y0, A.w, hh, TT.t, col, o, 'l', TT.s);
+        if (sub) {
+            const used = P.textWidth(TT.t, TT.s, true) + hh * .35 + 5;
+            const T = fit(P, sub, A.w - used - 3, 3, false, 1.6);
+            P.text(A.x1 - 2, A.y0 + hh / 2 + 1.2, T.t, { s: T.s, al: 'r', c: o.headStyle === 'band' ? '#ffffff' : '#666666' });
+        }
         if (I.moon != null) moonIcon(P, A.x1 - 3, A.y0 + hh + 4, 2, I.moon);
         const top = A.y0 + hh + 5, lw = A.w * .58, rx = A.x0 + lw + 6, rw = A.w - lw - 6;
         const hf = clamp(Math.round(num(o.hFrom, 7)), 0, 23), ht = clamp(Math.round(num(o.hTo, 20)), hf + 1, 24), rows = ht - hf, rh = (A.y1 - top) / rows;

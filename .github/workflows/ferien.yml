@@ -24,6 +24,11 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
       - name: Ferien bei der KMK holen
         run: python3 tools/ferien.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Alles prüfen, bevor etwas veröffentlicht wird
+        run: node tools/pruefen.js
       - name: Bei Änderung neue Version und Release
         env:
           GH_TOKEN: ${{ github.token }}

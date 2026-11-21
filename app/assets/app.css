@@ -248,3 +248,7 @@ select.preset { background: var(--soft); color: var(--accent); font-weight: 700;
 .area.free > p { margin: 4px 0 0; }
 .area.free .sec.special { background: var(--bg); }
 @media (max-width: 420px) { .area.free { padding: 4px 10px 14px; } }
+
+/* Schnellleiste unter der Vorschau: neu würfeln, Lösungen */
+.quick { display: flex; align-items: center; gap: 10px 16px; flex-wrap: wrap; margin-top: 10px; }
+.quick .btn { flex: 1 1 auto; max-width: 340px; }

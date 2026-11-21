@@ -68,6 +68,10 @@ Abschalten: in `data/config.php` den Eintrag `'auto_update' => false` setzen.
 
 **Neues Release bauen:** Version in `index.php` (`BL_VERSION`) erhöhen, committen, dann unter Actions → Release → „Run workflow“ starten (oder einen Tag wie `1.0.1` pushen).
 
+## Prüfung
+
+`node tools/pruefen.js` erzeugt jedes Papier in 10 Formaten und mit allen Auswahlmöglichkeiten, den kleinsten und größten Zahlenwerten und langen Texten (über 6000 Varianten). Gemeldet werden fehlende Zeichen oder Texte, Inhalt außerhalb der Seite oder im Branding-Bereich, Text an der Blattkante und überlappende oder zu eng stehende Zahlen. Dazu werden 128 000 Rechenaufgaben nachgerechnet und die Kalender gegen bekannte Daten geprüft. Läuft bei jedem Push automatisch (GitHub Action „Prüfen“) und vor jedem Ferien-Update.
+
 ## Aufbau
 
 ```
@@ -82,7 +86,7 @@ app/assets/app.js    Die Oberfläche
 app/assets/sw.js     Service Worker (offline)
 branding/            Logos von blanko und burnersen als SVG und PNG
 docs/lineaturen.md   Maße und Quellen aller Lineaturen
-tools/               Release bauen, Installer-Vorlage
+tools/               Release bauen, Installer-Vorlage, Schulferien holen (ferien.py), Prüfung (pruefen.js)
 ```
 
 Jedes Papier hat seine eigene Adresse (`?p=lin-3`), mit passendem Titel und Beschreibung für Suchmaschinen. Eine Sitemap gibt es unter `?action=sitemap`.
