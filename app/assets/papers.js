@@ -834,6 +834,165 @@
         },
     };
 
+    /* ---------- Tabelle: Stundenplan, Vokabeln, Hausaufgaben, eigene Tabellen ---------- */
+    const HEAD_COLORS = [['#dcefd6', 'Grün'], ['#d8e8f8', 'Blau'], ['#fdf1b8', 'Gelb'], ['#fbe0d4', 'Rosa'], ['#e9e3f5', 'Lila'], ['#e6e6e6', 'Grau']];
+    const splitList = s => String(s || '').split(/[,;]/).map(x => x.trim());
+    G.table = {
+        group: 'Tabelle',
+        def: { cols: 3, widths: '', rows: 0, rowH: 9, thead: true, heads: '', headScheme: 'one', headC: '#dcefd6', rowLabels: '', num: false, zebra: false, lc: '#666666' },
+        schema: [
+            { k: 'cols', t: 'num', l: 'Spalten', min: 1, max: 20, step: 1 },
+            { k: 'widths', t: 'text', l: 'Spaltenbreiten', ph: 'z. B. 1, 3, 3', hint: 'als Verhältnis, durch Komma getrennt. Leer = alle gleich breit' },
+            { k: 'rows', t: 'num', l: 'Zeilen', min: 0, max: 80, step: 1, hint: '0 = so viele, wie aufs Blatt passen' },
+            { k: 'rowH', t: 'num', l: 'Zeilenhöhe', u: 'mm', min: 4, max: 60, step: .5, show: o => !(+o.rows > 0) },
+            { k: 'thead', t: 'chk', l: 'Kopfzeile mit Spaltentiteln' },
+            { k: 'heads', t: 'text', l: 'Spaltentitel', ph: 'z. B. Deutsch, Englisch', hint: 'durch Komma getrennt', show: o => !!o.thead },
+            { k: 'headScheme', t: 'seg', l: 'Farbe der Kopfzeile', show: o => !!o.thead, opts: [['one', 'eine Farbe'], ['rainbow', 'bunt'], ['none', 'ohne']] },
+            { k: 'headC', t: 'color', l: 'Kopffarbe', show: o => !!o.thead && o.headScheme === 'one', opts: HEAD_COLORS },
+            { k: 'rowLabels', t: 'text', l: 'Text in der ersten Spalte', ph: 'z. B. Montag, Dienstag', hint: 'durch Komma getrennt, eine Angabe pro Zeile' },
+            { k: 'num', t: 'chk', l: 'Zeilen nummerieren' },
+            { k: 'zebra', t: 'chk', l: 'Jede zweite Zeile leicht grau' },
+        ],
+        draw(P, A, o) {
+            const cols = clamp(Math.round(num(o.cols, 3)), 1, 30);
+            const ws = splitList(o.widths).map(Number).filter(v => v > 0);
+            while (ws.length < cols) ws.push(1);
+            const wsum = ws.slice(0, cols).reduce((a, b) => a + b, 0);
+            const xs = [A.x0];
+            for (let c = 0; c < cols; c++) xs.push(xs[c] + A.w * ws[c] / wsum);
+            const heads = splitList(o.heads);
+            const headH = o.thead ? clamp(num(o.rowH, 9) * 1.15, 8, 16) : 0;
+            let rows = Math.round(num(o.rows, 0)), rowH = clamp(num(o.rowH, 9), 2, 100);
+            if (rows > 0) rowH = (A.h - headH) / rows;
+            else rows = Math.max(1, Math.floor((A.h - headH) / rowH + 1e-6));
+            const y1 = A.y0 + headH + rows * rowH;
+            if (o.thead && o.headScheme !== 'none') {
+                for (let c = 0; c < cols; c++) {
+                    const fill = o.headScheme === 'rainbow' ? light(RAINBOW[c % 10], .55) : (o.headC || '#dcefd6');
+                    P.rect(xs[c], A.y0, xs[c + 1] - xs[c], headH, { fill });
+                }
+            }
+            if (o.zebra) for (let r = 1; r < rows; r += 2) P.rect(A.x0, A.y0 + headH + r * rowH, A.w, rowH, { fill: '#f1f2f4' });
+            const st = { w: Math.max(.2, num(o.lw, .2)), c: o.lc };
+            const L = [];
+            for (const x of xs) L.push([x, A.y0, x, y1]);
+            for (let r = 0; r <= rows; r++) L.push([A.x0, A.y0 + headH + r * rowH, A.x1, A.y0 + headH + r * rowH]);
+            if (o.thead) L.push([A.x0, A.y0, A.x1, A.y0]);
+            P.lines(L, st);
+            if (o.thead) P.line(A.x0, A.y0 + headH, A.x1, A.y0 + headH, { w: st.w * 2.2, c: o.lc });
+            const hs = Math.min(4.2, headH * .42);
+            if (o.thead) for (let c = 0; c < cols; c++) if (heads[c]) P.text((xs[c] + xs[c + 1]) / 2, A.y0 + headH / 2 + hs * .36, heads[c], { s: hs, b: true, al: 'c', c: '#222222' });
+            const labels = splitList(o.rowLabels).filter((v, i, a) => a.length > 1 || v);
+            const ls = Math.min(3.8, rowH * .42);
+            for (let r = 0; r < rows; r++) {
+                const t = o.num ? (r + 1) + '.' : labels[r] || '';
+                if (t) P.text(xs[0] + 1.8, A.y0 + headH + r * rowH + rowH / 2 + ls * .36, t, { s: ls, c: '#333333' });
+            }
+        },
+    };
+
+    /* ---------- Kasten zum Malen (für Bild und Text auf einem Blatt) ---------- */
+    G.box = {
+        group: 'Kasten',
+        def: { boxR: 3, boxLabel: '' },
+        schema: [
+            { k: 'boxLabel', t: 'text', l: 'Beschriftung im Kasten', ph: 'z. B. Mein Bild' },
+            { k: 'boxR', t: 'num', l: 'Runde Ecken', u: 'mm', min: 0, max: 15, step: 1 },
+        ],
+        draw(P, A, o) {
+            P.rect(A.x0, A.y0, A.w, A.h, { w: Math.max(.4, num(o.lw, .2) * 2.2), c: o.lc, r: num(o.boxR, 3) });
+            if (o.boxLabel) P.text(A.x0 + 3, A.y0 + 6, o.boxLabel, { s: 3.6, c: '#777777' });
+        },
+    };
+
+    /* ---------- Baukasten: bis zu drei Bereiche übereinander, jeder mit eigener Art ---------- */
+    const ZONE_TYPES = [['lines', 'Liniert / Lineatur'], ['grid', 'Kariert / Rautiert'], ['dots', 'Punkte / Kreuze'], ['mm', 'Millimeter'],
+        ['iso', 'Isometrie / Dreiecke'], ['hex', 'Sechsecke'], ['staff', 'Notenlinien / Tabulatur'], ['table', 'Tabelle'], ['box', 'Kasten zum Malen'], ['blank', 'Leer']];
+    const SKIP = ['lc', 'title', 'head'];   // gelten fürs ganze Blatt, nicht pro Bereich
+    const zk = (n, t, k) => 'z' + n + '_' + t + '_' + k;
+    /** Schnellwahl: die Papiere, die man immer braucht, mit einem Tipp */
+    const QUICK = [
+        ['Lineatur 1 (4 Linien, 5 mm)', 'lines', { sys: 'four', band: 5, ratio: '1:1:1', gap: 4.5, band2: 0, kon: 'gaps' }],
+        ['Lineatur 2 (4 Linien, 4 mm)', 'lines', { sys: 'four', band: 4, ratio: '1:1:1', gap: 4, band2: 0, kon: 'gaps' }],
+        ['Lineatur 3 (2 Linien, 3,5 mm)', 'lines', { sys: 'double', band: 3.5, pitch: 13, kon: 'none' }],
+        ['Lineatur 4 (liniert 10 mm)', 'lines', { sys: 'single', pitch: 10 }],
+        ['Liniert 9 mm (ab Klasse 5)', 'lines', { sys: 'single', pitch: 9 }],
+        ['Liniert 8 mm', 'lines', { sys: 'single', pitch: 8 }],
+        ['Kariert 5 mm', 'grid', { cw: 5, ch: 5, shrink: 0 }],
+        ['Kariert 7 mm', 'grid', { cw: 7, ch: 7, shrink: 0 }],
+        ['Kariert 10 mm', 'grid', { cw: 10, ch: 10, shrink: 0 }],
+        ['Rautiert 5 × 9 mm', 'grid', { cw: 5, ch: 9, shrink: 0 }],
+        ['Punkte 5 mm', 'dots', { sp: 5, style: 'dot' }],
+        ['Millimeterpapier', 'mm', {}],
+        ['Isometrie', 'iso', { style: 'dots' }],
+        ['Notenlinien', 'staff', { n: 5, lg: 2.5, tab: false }],
+        ['Tabelle', 'table', {}],
+        ['Kasten zum Malen', 'box', {}],
+        ['Leer', 'blank', {}],
+    ];
+    function zoneView(o, n) {
+        const t = G[o['z' + n + '_type']] ? o['z' + n + '_type'] : 'blank', g = G[t];
+        const v = { ...o };
+        for (const k in g.def) if (!SKIP.includes(k)) v[k] = o[zk(n, t, k)] !== undefined ? o[zk(n, t, k)] : g.def[k];
+        return { t, g, v };
+    }
+    G.build = {
+        group: 'Aufteilung',
+        def: (() => {
+            const d = { zones: 1, z1_h: 50, z2_h: 30, zgap: 8, z1_type: 'grid', z2_type: 'lines', z3_type: 'lines', z1_preset: '', z2_preset: '', z3_preset: '' };
+            for (let n = 1; n <= 3; n++) for (const [t] of ZONE_TYPES) for (const k in G[t].def) if (!SKIP.includes(k)) d[zk(n, t, k)] = G[t].def[k];
+            return d;
+        })(),
+        schema: (() => {
+            const S = [
+                { g: 'Aufteilung', k: 'zones', t: 'seg', l: 'Bereiche auf dem Blatt', opts: [['1', 'ganzes Blatt'], ['2', '2 Bereiche'], ['3', '3 Bereiche']], hint: 'z. B. oben ein Kasten zum Malen, unten Linien zum Schreiben' },
+                { g: 'Aufteilung', k: 'z1_h', t: 'num', l: 'Höhe Bereich 1', u: '%', min: 10, max: 90, step: 5, show: o => +o.zones >= 2 },
+                { g: 'Aufteilung', k: 'z2_h', t: 'num', l: 'Höhe Bereich 2', u: '%', min: 10, max: 80, step: 5, show: o => +o.zones >= 3 },
+                { g: 'Aufteilung', k: 'zgap', t: 'num', l: 'Abstand zwischen den Bereichen', u: 'mm', min: 0, max: 40, step: 1, show: o => +o.zones >= 2 },
+            ];
+            for (let n = 1; n <= 3; n++) {
+                const g = 'Bereich ' + n, on = o => +o.zones >= n;
+                S.push({ g, k: 'z' + n + '_preset', t: 'preset', l: 'Schnellwahl', show: on,
+                    opts: QUICK.map(([label, t, patch]) => [label, Object.fromEntries([['z' + n + '_type', t], ...Object.entries(patch).map(([k, v]) => [zk(n, t, k), v])])]) });
+                S.push({ g, k: 'z' + n + '_type', t: 'sel', l: 'Art', show: on, opts: ZONE_TYPES });
+                for (const [t] of ZONE_TYPES) {
+                    for (const s of G[t].schema || []) {
+                        if (SKIP.includes(s.k)) continue;
+                        const inner = s.show;
+                        S.push({ ...s, g, k: zk(n, t, s.k), norm: false,
+                            show: o => +o.zones >= n && o['z' + n + '_type'] === t && (!inner || inner(zoneView(o, n).v)) });
+                    }
+                }
+            }
+            return S;
+        })(),
+        draw(P, A, o, pi) {
+            const n = clamp(Math.round(num(o.zones, 1)), 1, 3), gap = n > 1 ? clamp(num(o.zgap, 8), 0, 60) : 0;
+            const H = A.h - gap * (n - 1);
+            const hs = n === 1 ? [H] : n === 2 ? [H * clamp(num(o.z1_h, 50), 5, 95) / 100] : [H * clamp(num(o.z1_h, 50), 5, 90) / 100, H * clamp(num(o.z2_h, 30), 5, 90) / 100];
+            if (n > 1) hs.push(Math.max(5, H - hs.reduce((a, b) => a + b, 0)));
+            let y = A.y0;
+            for (let i = 1; i <= n; i++) {
+                const h = hs[i - 1], Z = { x0: A.x0, x1: A.x1, w: A.w, y0: y, y1: y + h, h };
+                const { g, v } = zoneView(o, i);
+                if (h > 4) g.draw(P, Z, v, pi);
+                y += h + gap;
+            }
+        },
+    };
+
+    /** Ein Papier im Baukasten weiterbearbeiten: seine Einstellungen als Bereich 1 */
+    const BUILD_TYPES = ZONE_TYPES.map(z => z[0]);
+    function toBuild(paper, o) {
+        const t = paper.gen;
+        if (!BUILD_TYPES.includes(t)) return null;
+        const out = { zones: 1, z1_type: t };
+        for (const k in COMMON) out[k] = o[k];
+        for (const k in G[t].def) if (!SKIP.includes(k)) out[zk(1, t, k)] = o[k];
+        if (G[t].def.lc && o.lc) out.lc = o.lc;
+        return out;
+    }
+
     /* =====================================================================================================
        Zusammenbauen
        ===================================================================================================== */
@@ -869,7 +1028,7 @@
             if (s.t === 'num') out[s.k] = clamp(num(out[s.k], base[s.k]), s.min, s.max);
             else if (s.t === 'chk') out[s.k] = !!out[s.k];
             else if (s.t === 'color' && !/^#[0-9a-f]{6}$/i.test(out[s.k])) out[s.k] = base[s.k];
-            else if (s.t === 'text') out[s.k] = String(out[s.k] == null ? '' : out[s.k]).slice(0, 80);
+            else if (s.t === 'text') out[s.k] = String(out[s.k] == null ? '' : out[s.k]).slice(0, 200);
         }
         return out;
     }
@@ -906,5 +1065,5 @@
         return doc;
     }
 
-    self.BLPapers = { options, schema, changed, clean, build, gens: G, COMMON, LINE_COLORS, numColor };
+    self.BLPapers = { options, schema, changed, clean, build, toBuild, gens: G, COMMON, LINE_COLORS, numColor };
 })();

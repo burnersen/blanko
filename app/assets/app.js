@@ -44,7 +44,7 @@
         sun: 'M12 4V2M12 22v-2M4 12H2M22 12h-2M5.6 5.6 4.2 4.2M19.8 19.8l-1.4-1.4M5.6 18.4l-1.4 1.4M19.8 4.2l-1.4 1.4M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z',
         install: 'M12 3v12M7 10l5 5 5-5M5 21h14', ruler: 'M3 17 17 3l4 4L7 21zM7 13l2 2M10 10l2 2M13 7l2 2', close: 'M6 6l12 12M18 6 6 18',
         help: 'M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.7v.5M12 17v.5M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z', trash: 'M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14',
-        share: 'M12 3v13M7 8l5-5 5 5M5 14v6h14v-6',
+        share: 'M12 3v13M7 8l5-5 5 5M5 14v6h14v-6', plus: 'M4 4h16v16H4zM12 8v8M8 12h8', tools: 'M4 5h16M4 12h10M4 19h6M17 10l3 3-6 6h-3v-3z',
     };
     const icon = n => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true'); const p = document.createElementNS('http://www.w3.org/2000/svg', 'path'); p.setAttribute('d', ICONS[n] || ''); s.append(p); return s; };
     const LS = {
@@ -54,7 +54,8 @@
     let toastTimer = 0;
     function toast(msg, action) {
         const t = $('#toast');
-        t.replaceChildren(h('span', null, msg), action ? h('button', { class: 'btn', type: 'button', onclick: () => { t.hidden = true; action[1](); } }, action[0]) : null);
+        t.replaceChildren(h('span', null, msg));
+        if (action) t.append(h('button', { class: 'btn', type: 'button', onclick: () => { t.hidden = true; action[1](); } }, action[0]));
         t.hidden = false;
         clearTimeout(toastTimer);
         toastTimer = setTimeout(() => { t.hidden = true; }, action ? 12000 : 3200);
@@ -119,13 +120,34 @@
         box.replaceChildren(c);
         thumbCache.set(key, c);
     }
+    /* ---------- Favoriten: Stern auf jeder Karte, im Kopf der Seite und ganz oben auf der Startseite ---------- */
+    const favs = () => LS.get('fav', []).filter(id => BYID[id]);
+    function toggleFav(id) {
+        let f = LS.get('fav', []);
+        const on = !f.includes(id);
+        f = on ? [id, ...f.filter(x => x !== id)] : f.filter(x => x !== id);
+        LS.set('fav', f);
+        updateFavCount();
+        toast(on ? 'Bei den Favoriten gemerkt. Du findest sie oben beim Stern.' : 'Aus den Favoriten entfernt');
+        return on;
+    }
+    function updateFavCount() { const b = $('#favBtn'); if (b) b.dataset.n = favs().length || ''; }
+
     function card(p, extra) {
         const box = h('div', { class: 'thumb', 'data-id': p.id });
         if (extra && extra.o) box.dataset.o = JSON.stringify(extra.o);
-        thumbObs ? thumbObs.observe(box) : setTimeout(() => drawThumb(box));
+        const key = p.id + (box.dataset.o || ''), cached = thumbCache.get(key);
+        if (cached && !cached.isConnected) box.replaceChildren(cached);
+        else thumbObs ? thumbObs.observe(box) : setTimeout(() => drawThumb(box));
         const href = '?p=' + encodeURIComponent(p.id) + (extra && extra.mine != null ? '&m=' + extra.mine : '');
+        const star = extra && extra.mine != null ? null : h('button', { class: 'cstar' + (favs().includes(p.id) ? ' on' : ''), type: 'button', 'aria-label': 'Favorit', title: 'Als Favorit merken',
+            onclick: e => {
+                e.preventDefault(); e.stopPropagation();
+                star.classList.toggle('on', toggleFav(p.id));
+                if (!new URLSearchParams(location.search).toString() && !$('#q').value.trim()) { const y = scrollY; showHome(); scrollTo(0, y); }
+            } }, icon('star'));
         return h('a', { class: 'card', href, onclick: e => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); go(href); } },
-            box, p.nr ? h('span', { class: 'nr' }, p.nr) : null,
+            box, p.nr ? h('span', { class: 'nr' }, p.nr) : null, star,
             h('b', null, extra && extra.name || p.name), h('span', null, extra && extra.sub || p.short));
     }
 
@@ -160,13 +182,18 @@
         const fav = LS.get('fav', []).filter(id => BYID[id]);
         const mine = LS.get('mine', []).filter(m => BYID[m.id]);
         v.replaceChildren();
+        const favSec = fav.length ? section('★ Deine Favoriten', 'immer griffbereit', fav.map(id => card(BYID[id]))) : null;
+        if (favSec) favSec.classList.add('favs');
         put(v,
+            favSec,
             h('section', { class: 'hero' },
                 h('h1', null, 'Welches Papier brauchst du?'),
                 h('p', null, 'Alle Lineaturen für die Schule, Karopapier, Einmaleins und mehr. In Originalgröße, kostenlos und auch ohne Internet.'),
-                h('div', { class: 'grades' }, GRADES.map(([g, label]) => h('button', { class: 'chip', type: 'button', onclick: () => go('?k=' + g) }, label)))),
+                h('div', { class: 'grades' }, GRADES.map(([g, label]) => h('button', { class: 'chip', type: 'button', onclick: () => go('?k=' + g) }, label))),
+                h('a', { class: 'buildcta', href: '?p=baukasten', onclick: e => { e.preventDefault(); go('?p=baukasten'); } }, icon('tools'),
+                    h('span', null, h('b', null, 'Eigenes Papier gestalten'), h('small', null, 'Liniert, kariert, Punkte, Tabelle oder alles zusammen auf einem Blatt'))),
+                !fav.length ? h('p', { class: 'favhint' }, 'Tipp: Tippe bei einem Papier auf den Stern ☆, dann steht es hier ganz oben und du musst nicht mehr suchen.') : null),
             mine.length ? section('Meine Blätter', 'selbst eingestellt und gespeichert', mine.map((m, i) => card(BYID[m.id], { o: m.o, name: m.name, sub: BYID[m.id].name, mine: i }))) : null,
-            fav.length ? section('Favoriten', '', fav.map(id => card(BYID[id]))) : null,
             recent.length ? section('Zuletzt benutzt', '', recent.map(id => card(BYID[id]))) : null,
             CAT.cats.map(c => {
                 const list = PAPERS.filter(p => p.cat === c.id);
@@ -275,15 +302,8 @@
         current = me;
 
         /* --- Kopf --- */
-        const favs = () => LS.get('fav', []);
         const favBtn = h('button', { class: 'iconbtn' + (favs().includes(p.id) ? ' on' : ''), type: 'button', 'aria-label': 'Favorit', title: 'Als Favorit merken',
-            onclick: () => {
-                let f = favs();
-                f = f.includes(p.id) ? f.filter(x => x !== p.id) : [p.id, ...f];
-                LS.set('fav', f);
-                favBtn.classList.toggle('on', f.includes(p.id));
-                toast(f.includes(p.id) ? 'Bei den Favoriten gemerkt' : 'Aus den Favoriten entfernt');
-            } }, icon('star'));
+            onclick: () => favBtn.classList.toggle('on', toggleFav(p.id)) }, icon('star'));
         const head = h('div', { class: 'edhead' },
             h('button', { class: 'iconbtn', type: 'button', 'aria-label': 'Zurück', onclick: () => { if (navCount > 0) history.back(); else go('./'); } }, icon('back')),
             h('h1', null, mineEntry ? mineEntry.name : p.name, h('small', null, mineEntry ? p.name : p.short)), favBtn);
@@ -330,9 +350,13 @@
         /* --- Original oder angepasst --- */
         const status = h('div', { class: 'status' });
         function showStatus() {
-            const ch = BLPapers.changed(p, o);
+            const ch = p.nr ? BLPapers.changed(p, o) : [];
             const kids = [];
-            if (!ch.length) kids.push(h('span', { class: 'badge ok', title: p.src || '' }, icon('check'), p.nr ? 'Original Lineatur ' + p.nr : 'Grundeinstellung'));
+            if (!p.nr) {
+                const diff = !!encodeOpts(p, o);
+                kids.push(h('span', { class: 'badge ok' }, icon('check'), diff ? 'Eigene Einstellung' : 'Grundeinstellung'));
+                if (diff) kids.push(h('button', { class: 'btn small ghost', type: 'button', onclick: () => { o = BLPapers.options(p); sync(); changed(); } }, icon('reset'), 'Alles zurücksetzen'));
+            } else if (!ch.length) kids.push(h('span', { class: 'badge ok', title: p.src || '' }, icon('check'), p.nr ? 'Original Lineatur ' + p.nr : 'Grundeinstellung'));
             else kids.push(h('span', { class: 'badge mod' }, icon('warn'), 'Angepasst'),
                 h('button', { class: 'btn small ghost', type: 'button', onclick: () => resetNorm() }, icon('reset'), 'Zurück zum Original'));
             status.replaceChildren(...kids);
@@ -389,6 +413,13 @@
             } else if (s.t === 'text') {
                 const inp = h('input', { class: 'txt', type: 'text', maxlength: 80, placeholder: s.ph || '', 'aria-label': s.l, oninput: () => setVal(s.k, inp.value) });
                 node = inp; upd = () => { if (document.activeElement !== inp) inp.value = o[s.k] || ''; };
+            } else if (s.t === 'preset') {
+                const sel = h('select', { class: 'preset', 'aria-label': s.l, onchange: () => {
+                    const pt = s.opts[+sel.value];
+                    sel.value = '';
+                    if (pt) { Object.assign(o, pt[1]); changed(); }
+                } }, h('option', { value: '' }, 'Schnellwahl: Lineatur, Karo, Punkte …'), s.opts.map(([t], i) => h('option', { value: String(i) }, t)));
+                node = sel; upd = () => {};
             } else if (s.t === 'shuffle') {
                 node = h('button', { class: 'btn small', type: 'button', onclick: () => setVal(s.k, 1 + Math.floor(Math.random() * 99999)) }, icon('reset'), s.l);
                 lbl.hidden = true;
@@ -404,7 +435,7 @@
             if (!g) groups.push(g = { name: s.g, items: [] });
             g.items.push(s);
         }
-        const OPEN = ['Papier'];
+        const OPEN = ['Papier', 'Aufteilung', 'Bereich 1', 'Bereich 2', 'Bereich 3'];
         const groupNodes = groups.map((g, i) => {
             const d = h('details', { class: 'grp', open: i === 0 || OPEN.includes(g.name) }, h('summary', null, g.name), h('div', { class: 'rows' }, g.items.map(control)));
             return { d, g };
@@ -436,7 +467,11 @@
                 h('button', { class: 'btn big', type: 'button', onclick: () => download(pdfBytes(), fileName()) }, icon('download'), 'PDF speichern')),
             h('div', { class: 'btns' },
                 h('button', { class: 'btn small ghost', type: 'button', onclick: () => shareLink(p, o) }, icon('link'), 'Link teilen'),
-                h('button', { class: 'btn small ghost', type: 'button', onclick: () => saveMine(p, o, mineEntry, mineIdx) }, icon('save'), mineEntry ? 'Speichern' : 'Als mein Blatt speichern')),
+                h('button', { class: 'btn small ghost', type: 'button', onclick: () => saveMine(p, o, mineEntry, mineIdx) }, icon('save'), mineEntry ? 'Speichern' : 'Als mein Blatt speichern'),
+                p.id !== 'baukasten' && BLPapers.toBuild(p, o) && BYID.baukasten ? h('button', { class: 'btn small ghost', type: 'button', onclick: () => {
+                    const bp = BYID.baukasten, enc = encodeOpts(bp, BLPapers.clean(bp, { ...BLPapers.options(bp), ...BLPapers.toBuild(p, o) }));
+                    go('?p=baukasten' + (enc ? '#o=' + enc : ''));
+                } }, icon('tools'), 'Im Baukasten weiterbearbeiten') : null),
             h('p', { class: 'tip' }, h('b', null, 'Wichtig beim Drucken: '), 'Wähle „Tatsächliche Größe“ oder „100 %“, nicht „An Seite anpassen“. Sonst werden die Linien kleiner. ',
                 h('a', { href: '?p=druckertest', onclick: e => { e.preventDefault(); go('?p=druckertest'); } }, 'Drucker testen')));
         const src = p.src ? h('p', { class: 'src' }, h('b', null, 'Woher die Maße kommen: '), p.src) : null;
@@ -528,6 +563,17 @@
        ===================================================================================================== */
     const mitem = (ic, label, sub, onclick, href) => h(href ? 'a' : 'button', { class: 'mitem', type: href ? null : 'button', href, target: href ? '_blank' : null, rel: href ? 'noopener' : null, onclick },
         icon(ic), h('span', null, h('b', null, label), sub ? h('small', null, sub) : null));
+    function showFavorites() {
+        const f = favs(), mine = LS.get('mine', []).filter(m => BYID[m.id]);
+        const open = href => () => { document.querySelector('.shade')?.remove(); $('#q').value = ''; go(href); };
+        const item = (p, name, sub, href) => h('button', { class: 'mitem', type: 'button', onclick: open(href) },
+            p.nr ? h('span', { class: 'nr inline' }, p.nr) : icon('star'), h('span', null, h('b', null, name), sub ? h('small', null, sub) : null));
+        sheet('Favoriten', h('div', null,
+            f.length ? h('div', { class: 'menu' }, f.map(id => item(BYID[id], BYID[id].name, BYID[id].short, '?p=' + id)))
+                : h('p', { class: 'muted' }, 'Noch keine Favoriten. Tippe bei einem Papier auf den Stern ☆, dann findest du es hier mit einem Tipp wieder.'),
+            mine.length ? [h('h3', { class: 'sub' }, 'Meine Blätter'), h('div', { class: 'menu' }, mine.map((m, i) => item(BYID[m.id], m.name, BYID[m.id].name, '?p=' + m.id + '&m=' + i)))] : null,
+            h('div', { class: 'btns' }, h('button', { class: 'btn', type: 'button', onclick: open('?p=baukasten') }, icon('tools'), 'Eigenes Papier gestalten'))));
+    }
     function showMenu() {
         const sh = sheet('Menü', h('div', { class: 'menu' },
             mitem('info', 'Über blanko', 'Wer das gemacht hat, und mehr kostenlose Programme', () => { sh.close(); showAbout(); }),
@@ -662,6 +708,8 @@
         if (!self.BLPapers || !self.BLPdf) { setTimeout(start, 30); return; }
         applySet();
         $('#menuBtn').addEventListener('click', showMenu);
+        $('#favBtn').addEventListener('click', showFavorites);
+        updateFavCount();
         $('#home').addEventListener('click', e => { e.preventDefault(); $('#q').value = ''; go('./'); });
         $('#q').addEventListener('input', onSearch);
         $('#q').addEventListener('keydown', e => {

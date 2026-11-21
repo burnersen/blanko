@@ -43,6 +43,7 @@ $blCanon = blBaseUrl() . ($blPaper ? '?p=' . $blPaper['id'] : '');
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
         <input id="q" type="search" placeholder="Suchen, z. B. Lineatur 3, kariert, Einmaleins" autocomplete="off" aria-label="Papier suchen">
     </div>
+    <button id="favBtn" class="iconbtn favbtn" type="button" aria-label="Favoriten" title="Favoriten"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></svg></button>
     <button id="menuBtn" class="iconbtn" type="button" aria-label="Menü"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
 </header>
 <div id="banner" hidden></div>

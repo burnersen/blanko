@@ -193,3 +193,24 @@ select, .txt { width: 100%; border: 1px solid var(--line); background: var(--bg)
 /* Drucken über den Browser (Notlösung): nur das Papier */
 iframe.printframe { position: fixed; right: 0; bottom: 0; width: 1px; height: 1px; border: 0; opacity: 0; }
 .row > label.switch { justify-content: flex-start; margin: 0; }
+
+/* ---------- Favoriten und Baukasten ---------- */
+.favbtn { position: relative; color: #e0a000; }
+.favbtn svg { fill: #f5c33b; stroke: #c48a00; }
+.favbtn[data-n]:not([data-n=""])::after { content: attr(data-n); position: absolute; top: 4px; right: 2px; min-width: 18px; height: 18px; border-radius: 9px; background: var(--accent); color: var(--on-accent); font-size: .72rem; font-weight: 800; display: grid; place-items: center; padding: 0 4px; }
+.cstar { position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, .92); box-shadow: 0 1px 4px rgba(0, 0, 0, .2); display: grid; place-items: center; padding: 0; color: #9aa1ab; }
+.cstar svg { width: 19px; height: 19px; }
+.cstar:hover { color: #e0a000; }
+.cstar.on { color: #c48a00; }
+.cstar.on svg { fill: #f5c33b; }
+.sec.favs { margin-top: 14px; background: var(--card); border: 2px solid #f5c33b; border-radius: var(--r); padding: 14px; }
+.sec.favs .grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+.favhint { margin-top: 12px !important; font-size: .92rem; }
+.buildcta { margin-top: 14px; display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: var(--r); background: var(--brand); color: #fff; text-decoration: none; box-shadow: var(--shadow); max-width: 620px; }
+.buildcta svg { width: 30px; height: 30px; color: #69db7c; }
+.buildcta span { display: flex; flex-direction: column; }
+.buildcta b { font-size: 1.1rem; }
+.buildcta small { color: #cfd6df; }
+.buildcta:hover { filter: brightness(1.12); }
+.nr.inline { position: static; flex: none; min-width: 38px; text-align: center; box-shadow: none; }
+select.preset { background: var(--soft); color: var(--accent); font-weight: 700; border-color: transparent; }
