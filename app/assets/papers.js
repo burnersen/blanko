@@ -47,7 +47,7 @@
         { g: 'Papier', k: 'ori', t: 'seg', l: 'Ausrichtung', opts: [['h', 'Hochformat'], ['q', 'Querformat']] },
         { g: 'Papier', k: 'pages', t: 'num', l: 'Seiten', min: 1, max: 50, step: 1 },
         { g: 'Rand und Kopf', k: 'rand', t: 'sel', l: 'Korrekturrand', norm: true, opts: [['none', 'ohne Rand'], ['r', 'rechts'], ['l', 'links'], ['lr', 'Doppelrand (links und rechts)'], ['out', 'außen (für beidseitigen Druck)'], ['all', 'Umrandung rundum']] },
-        { g: 'Rand und Kopf', k: 'randW', t: 'num', l: 'Randbreite', u: 'mm', min: 3, max: 60, step: 1, norm: true, show: o => o.rand !== 'none' && o.rand !== 'all' },
+        { g: 'Rand und Kopf', k: 'randW', t: 'num', l: 'Randbreite', u: 'mm', min: 3, max: 120, step: 1, norm: true, show: o => o.rand !== 'none' && o.rand !== 'all' },
         { g: 'Rand und Kopf', k: 'head', t: 'sel', l: 'Kopfzeile', opts: [['none', 'keine'], ['name', 'Name'], ['namedate', 'Name und Datum'], ['nameklasse', 'Name, Klasse und Datum']] },
         { g: 'Rand und Kopf', k: 'title', t: 'text', l: 'Überschrift', ph: 'z. B. Diktat, Hausaufgabe' },
         { g: 'Farbe', k: 'lc', t: 'color', l: 'Linienfarbe', opts: LINE_COLORS },
@@ -82,7 +82,7 @@
             y0 += 11;
         }
         const st = { w: Math.max(.25, num(o.lw, .2) * 1.4), c: o.lc || COMMON.lc };
-        const rw = clamp(num(o.randW, 18), 3, (x1 - x0) / 3);
+        const rw = clamp(num(o.randW, 18), 3, (x1 - x0) * .6);
         let side = o.rand;
         if (side === 'out') side = pi % 2 ? 'l' : 'r';
         if (side === 'l' || side === 'lr') { P.line(x0 + rw, y0, x0 + rw, y1, st); x0 += rw; }
@@ -329,7 +329,7 @@
     /* ---------- Notenlinien und Gitarren-Tabulatur ---------- */
     G.staff = {
         group: 'Notenlinien',
-        def: { n: 5, lg: 2.5, sgap: 12, tab: false, lc: '#555555' },
+        def: { n: 5, lg: 2.3, sgap: 22, tab: false, lc: '#555555' },
         schema: [
             { k: 'n', t: 'num', l: 'Linien pro System', min: 1, max: 8, step: 1, norm: true },
             { k: 'lg', t: 'num', l: 'Linienabstand', u: 'mm', min: 1, max: 10, step: .1, norm: true },
@@ -912,9 +912,9 @@
     const zk = (n, t, k) => 'z' + n + '_' + t + '_' + k;
     /** Schnellwahl: die Papiere, die man immer braucht, mit einem Tipp */
     const QUICK = [
-        ['Lineatur 1 (4 Linien, 5 mm)', 'lines', { sys: 'four', band: 5, ratio: '1:1:1', gap: 4.5, band2: 0, kon: 'gaps' }],
-        ['Lineatur 2 (4 Linien, 4 mm)', 'lines', { sys: 'four', band: 4, ratio: '1:1:1', gap: 4, band2: 0, kon: 'gaps' }],
-        ['Lineatur 3 (2 Linien, 3,5 mm)', 'lines', { sys: 'double', band: 3.5, pitch: 13, kon: 'none' }],
+        ['Lineatur 1 (4 Linien, 5 mm)', 'lines', { sys: 'four', band: 5, ratio: '1:1:1', gap: 5, band2: 0, kon: 'gaps' }],
+        ['Lineatur 2 (4 Linien, 4 mm)', 'lines', { sys: 'four', band: 4, ratio: '1:1:1', gap: 5, band2: 0, kon: 'gaps' }],
+        ['Lineatur 3 (2 Linien, 3,5 mm)', 'lines', { sys: 'double', band: 3.5, pitch: 12, kon: 'none' }],
         ['Lineatur 4 (liniert 10 mm)', 'lines', { sys: 'single', pitch: 10 }],
         ['Liniert 9 mm (ab Klasse 5)', 'lines', { sys: 'single', pitch: 9 }],
         ['Liniert 8 mm', 'lines', { sys: 'single', pitch: 8 }],
@@ -925,7 +925,7 @@
         ['Punkte 5 mm', 'dots', { sp: 5, style: 'dot' }],
         ['Millimeterpapier', 'mm', {}],
         ['Isometrie', 'iso', { style: 'dots' }],
-        ['Notenlinien', 'staff', { n: 5, lg: 2.5, tab: false }],
+        ['Notenlinien', 'staff', { n: 5, lg: 2.3, sgap: 22, tab: false }],
         ['Tabelle', 'table', {}],
         ['Kasten zum Malen', 'box', {}],
         ['Leer', 'blank', {}],
