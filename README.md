@@ -13,6 +13,8 @@
 Samstagabend, auf der Materialliste steht „Lineatur 3“, und kein Laden hat mehr offen? blanko hat das Papier:
 Lineatur antippen, drucken, fertig. In Originalgröße, kostenlos, ohne Werbung, ohne Anmeldung und auch ohne Internet.
 
+<p align="center"><img src="docs/blanko-demo.gif" alt="blanko in einer Minute: Lineatur suchen, anpassen, Rechenblätter, Einmaleins, Kalender, Baukasten und Drucken" width="300"></p>
+
 ## Was blanko kann
 
 - **Alle Schul-Lineaturen**, orientiert an DIN 16552-1: SL, 0, 1, 1q, 2, 3, 3R, VA, dm, GS, A1, 4, 9, 21, 25, 25A, 27, R, ZL, 5, 7, 8f, 10, 22, 23, 26, 26A, 28, 29, 40, 47, GR, 6 und 14. Welche Maße genau und woher sie stammen, steht in [docs/lineaturen.md](docs/lineaturen.md).

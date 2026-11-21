@@ -136,9 +136,15 @@
     function card(p, extra) {
         const box = h('div', { class: 'thumb', 'data-id': p.id });
         if (extra && extra.o) box.dataset.o = JSON.stringify(extra.o);
+        // Fertige Bildchen als Kopie übernehmen. Das Original selbst einzuhängen hieße, es aus einer anderen Karte zu ziehen:
+        // Steht ein Papier zweimal auf der Startseite (Zuletzt benutzt und in seiner Kategorie), bliebe die erste Karte leer.
         const key = p.id + (box.dataset.o || ''), cached = thumbCache.get(key);
-        if (cached && !cached.isConnected) box.replaceChildren(cached);
-        else thumbObs ? thumbObs.observe(box) : setTimeout(() => drawThumb(box));
+        if (cached) {
+            const c = h('canvas');
+            c.width = cached.width; c.height = cached.height;
+            c.getContext('2d').drawImage(cached, 0, 0);
+            box.replaceChildren(c);
+        } else thumbObs ? thumbObs.observe(box) : setTimeout(() => drawThumb(box));
         const href = '?p=' + encodeURIComponent(p.id) + (extra && extra.mine != null ? '&m=' + extra.mine : '');
         const star = extra && extra.mine != null ? null : h('button', { class: 'cstar' + (favs().includes(p.id) ? ' on' : ''), type: 'button', 'aria-label': 'Favorit', title: 'Als Favorit merken',
             onclick: e => {
