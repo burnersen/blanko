@@ -1,0 +1,43 @@
+# Holt einmal im Monat die Schulferien aus den Ferientabellen der Kultusministerkonferenz (tools/ferien.py).
+# Haben sich Termine geändert oder ist ein neues Schuljahr dazugekommen, wird die Version erhöht, committet
+# und ein neues Release gebaut. Alle Installationen holen es sich dann von selbst (Update von allein).
+# Von Hand: Actions → Schulferien → „Run workflow“.
+name: Schulferien
+
+on:
+  schedule:
+    - cron: '17 4 3 * *'   # am 3. jedes Monats, 4:17 Uhr UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  ferien:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Werkzeuge
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+      - name: Ferien bei der KMK holen
+        run: python3 tools/ferien.py
+      - name: Bei Änderung neue Version und Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- app/assets/ferien.json; then
+            echo "Keine neuen Ferientermine."
+            exit 0
+          fi
+          OLD="$(sed -n "s/^define('BL_VERSION', '\([^']*\)');.*/\1/p" index.php)"
+          NEW="$(echo "$OLD" | awk -F. '{ printf "%d.%d.%d", $1, $2, $3 + 1 }')"
+          sed -i "s/define('BL_VERSION', '$OLD');/define('BL_VERSION', '$NEW');/" index.php
+          git config user.name "blanko-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/assets/ferien.json index.php
+          git commit -m "Schulferien aktualisiert (Version $NEW)"
+          git push origin HEAD:main
+          gh workflow run release.yml --ref main

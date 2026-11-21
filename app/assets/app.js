@@ -302,6 +302,8 @@
         if (mineEntry) o = BLPapers.clean(p, { ...o, ...mineEntry.o });
         const hm = /[#&]o=([A-Za-z0-9_-]+)/.exec(location.hash);
         if (hm) o = BLPapers.clean(p, { ...o, ...decodeOpts(hm[1]) });
+        // Kalender: zuletzt gewähltes Bundesland übernehmen
+        else if (p.gen === 'cal' && !mineEntry && LS.get('land', '')) o.land = LS.get('land', '');
         const schema = BLPapers.schema(p);
         const me = {};
         current = me;
@@ -499,7 +501,7 @@
             if (!g) groups.push(g = { name: s.g, items: [] });
             g.items.push(s);
         }
-        const OPEN = ['Papier', 'Aufteilung', 'Bereich 1', 'Bereich 2', 'Bereich 3'];
+        const OPEN = ['Papier', 'Aufteilung', 'Bereich 1', 'Bereich 2', 'Bereich 3', 'Kalender', 'Einträge', 'Farben und Form'];
         const groupNodes = groups.map((g, i) => {
             const d = h('details', { class: 'grp', open: i === 0 || OPEN.includes(g.name) }, h('summary', null, g.name), h('div', { class: 'rows' }, g.items.map(control)));
             return { d, g };
@@ -510,6 +512,7 @@
         }
         let saveTimer = 0;
         function changed() {
+            if (p.gen === 'cal' && o.land) LS.set('land', o.land);
             sync();
             showStatus();
             redraw();
@@ -774,7 +777,7 @@
 
     /* ---------- Start ---------- */
     function start() {
-        if (!self.BLPapers || !self.BLPdf) { setTimeout(start, 30); return; }
+        if (!self.BLPapers || !self.BLPdf || !self.BLCal) { setTimeout(start, 30); return; }
         applySet();
         $('#menuBtn').addEventListener('click', showMenu);
         $('#favBtn').addEventListener('click', showFavorites);

@@ -21,6 +21,7 @@ Lineatur antippen, drucken, fertig. In Originalgröße, kostenlos, ohne Werbung,
 - **Papier-Baukasten:** alles in einem Fenster. Art auswählen (liniert, kariert, Punkte, Millimeter, Isometrie, Sechsecke, Notenlinien, Tabelle, Kasten zum Malen), mit Schnellwahl für Lineatur 1 bis 4, Karo 5, 7 und 10 mm und mehr. Bis zu drei Bereiche auf einem Blatt, zum Beispiel oben malen und unten schreiben. Jedes Papier lässt sich mit „Im Baukasten weiterbearbeiten“ dorthin mitnehmen.
 - **Vorlagen:** Stundenplan, Vokabelliste, Hausaufgabenplan, Wochenplan, Malen und Schreiben (Lineatur 1, 2 und 3), Rechengeschichte, Lesetagebuch und Tabellen nach Wunsch.
 - **Favoriten:** Stern auf jeder Karte, die Favoriten stehen ganz oben auf der Startseite und sind über den Stern im Kopf immer mit einem Tipp erreichbar.
+- **Kalender:** Jahreskalender, Schuljahreskalender (August bis Juli), Jahresplaner / Urlaubsplaner, Monatskalender, Bastelkalender zum Bemalen, Familienplaner (eine Spalte pro Person), Wochenkalender, Tagesplaner und immerwährender Geburtstagskalender. Mit Feiertagen aller 16 Bundesländer, Brückentagen, Schulferien, Kalenderwochen und Mondphasen. Farben, Form der Tage, Überschriften und Schrift frei wählbar, alle Formate von A6 bis A3, hoch oder quer.
 - **Kreativ:** Punktraster, Isometrie, Dreiecke, Sechsecke, Storyboard, Comic, Kalligrafie, Handlettering.
 - **Spezialpapiere** in einem eigenen Bereich: Logarithmenpapier, Polarkoordinaten, Wahrscheinlichkeitsnetz, Gitarren-Tabulatur, Tianzige, Mizige, Genkō yōshi und ein Druckertest.
 - **Original oder angepasst:** Jede Lineatur startet im Original. Alles lässt sich verstellen (Linienabstände, Kästchen, Rand, Kopfzeile mit Name und Datum, Farben, Format, Seitenzahl). Verstelltes zeigt „Angepasst“, ein Tipp bringt das Original zurück.
@@ -35,6 +36,13 @@ Lineatur antippen, drucken, fertig. In Originalgröße, kostenlos, ohne Werbung,
 Die Startseite ist zweigeteilt: oben alles für die Schule, darunter abgesetzt „Für zu Hause, Hobby und Beruf“ (Planen und Tabellen, Kreativ, Spezialpapiere).
 
 Auf jedem Ausdruck steht unten links „Kostenlos erstellt mit blanko.burnersen.de“ und rechts „Noch mehr cooles Zeugs auf burnersen.de“.
+
+## Kalender: Feiertage, Brückentage, Schulferien
+
+- **Feiertage** werden für jedes Jahr im Browser berechnet (Ostern nach der Gaußschen Osterformel, alle beweglichen Feiertage hängen daran), für alle 16 Bundesländer. Kein Internet nötig.
+- **Brückentage:** ein Arbeitstag zwischen einem Feiertag und dem Wochenende.
+- **Mondphasen** nach Jean Meeus, auf wenige Minuten genau.
+- **Schulferien** stammen aus den offiziellen Ferientabellen der Kultusministerkonferenz (`app/assets/ferien.json`). Die GitHub Action „Schulferien“ (`.github/workflows/ferien.yml`) holt sie am 3. jedes Monats neu (`tools/ferien.py`), prüft sie und baut bei Änderungen automatisch ein neues Release. Jede Installation holt sich das dann von selbst. Auf jedem Kalender steht, bis wann Ferien hinterlegt sind.
 
 ## Voraussetzungen
 

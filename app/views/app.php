@@ -33,7 +33,9 @@ $blCanon = blBaseUrl() . ($blPaper ? '?p=' . $blPaper['id'] : '');
 <script src="<?= $blV('boot.js') ?>"></script>
 <script defer src="<?= $blV('pdf.js') ?>"></script>
 <script defer src="<?= $blV('papers.js') ?>"></script>
+<script defer src="<?= $blV('calendar.js') ?>"></script>
 <script defer src="<?= $blV('app.js') ?>"></script>
+<script type="application/json" id="ferien"><?= str_replace('</', '<\/', (string)@file_get_contents(BL_APP . '/assets/ferien.json')) ?></script>
 <script type="application/json" id="catalog"><?= str_replace('</', '<\/', (string)json_encode($blCat, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) ?></script>
 </head>
 <body>

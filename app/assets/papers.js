@@ -1298,14 +1298,16 @@
 
     function options(paper) {
         const g = genOf(paper);
-        return { ...COMMON, ...g.def, ...(paper.def || {}) };
+        const o = { ...COMMON, ...g.def, ...(paper.def || {}) };
+        return g.fix ? g.fix(o) : o;   // z. B. Kalender: Jahr passend zum heutigen Datum
     }
 
     /** Regler in Gruppen: erst die eigenen des Papiers, dann die gemeinsamen */
     function schema(paper) {
         const g = genOf(paper);
         const own = (g.schema || []).map(s => ({ ...s, g: s.g || g.group }));
-        return own.concat(COMMON_SCHEMA);
+        // Papiere, die ihre Seitenzahl selbst bestimmen (Kalender), brauchen den Regler „Seiten“ nicht
+        return own.concat(g.pages ? COMMON_SCHEMA.filter(s => s.k !== 'pages') : COMMON_SCHEMA);
     }
 
     /** Genormte Werte, die vom Original abweichen */
@@ -1344,11 +1346,13 @@
             if (q) { pw = 210; ph = 297; frames = [{ x: 0, y: 0, w: 210, h: 148.5 }, { x: 0, y: 148.5, w: 210, h: 148.5 }]; }
             else { pw = 297; ph = 210; frames = [{ x: 0, y: 0, w: 148.5, h: 210 }, { x: 148.5, y: 0, w: 148.5, h: 210 }]; }
         }
-        const pages = opt.thumb ? 1 : clamp(Math.round(num(o.pages, 1)), 1, 50);
+        const total = g.pages ? clamp(g.pages(o), 1, 400) : null;   // Kalender: so viele Blätter wie Monate, Wochen oder Tage
+        const pages = opt.thumb ? 1 : total ? Math.ceil(total / frames.length) : clamp(Math.round(num(o.pages, 1)), 1, 50);
         let k = 0;
         for (let p = 0; p < pages; p++) {
             const P = doc.page(pw, ph);
             for (const fr of frames) {
+                if (total && k >= total && !opt.thumb) break;
                 const A = area(P, fr, o, k);
                 if (A.w > 5 && A.h > 5) g.draw(P, A, o, k);
                 k++;
@@ -1363,5 +1367,6 @@
         return doc;
     }
 
-    self.BLPapers = { options, schema, changed, clean, build, toBuild, gens: G, COMMON, LINE_COLORS, numColor };
+    self.BLPapers = { options, schema, changed, clean, build, toBuild, gens: G, COMMON, LINE_COLORS, numColor,
+        helpers: { clamp, num, mix, light, darkC, rng, RAINBOW, writer, area, rectPath, cells } };
 })();
