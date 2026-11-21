@@ -18,7 +18,7 @@ aus dieser Tabelle wieder her.
 
 | Lineatur | Klasse | Original | blanko zeichnet |
 |---|---|---|---|
-| SL | 1 | 4 Linien, 6 mm, Zeilen werden nach unten kleiner, Kontrast, A4 quer, Liniensysteme in zwei Größen | obere Hälfte 6 mm, untere Hälfte 4 mm je Band, 5 mm Abstand, Kontrast |
+| SL | 1 | 4 Linien, Zeilen werden nach unten kleiner, Kontrast, A4 quer, Liniensysteme in zwei Größen | oben 2 Systeme mit 10 mm neben einem Bildkasten, darunter 4 Systeme mit 6 mm (nachgemessen), Kontrast |
 | 0 | 1 | 4 Linien, je 6 mm, Kontrast, A5 quer, 5 Liniensysteme | je 6 mm, 8 mm zwischen den Systemen (nachgemessen), Kontrast, 2 × A5 quer auf A4 |
 | 1 | 1 | 4 Linien, je 5 mm, Kontrast; im Handel 14 Liniensysteme auf A4, 11 auf A5 | je 5 mm, 5 mm zwischen den Systemen, Kontrast |
 | 1q | 1 | wie 1, A5 quer, 7 Liniensysteme | je 5 mm, 3 mm zwischen den Systemen (nachgemessen), 2 × A5 quer auf A4 |
@@ -26,6 +26,10 @@ aus dieser Tabelle wieder her.
 | 3 | 3 | 2 Linien, Abstand 3,5 mm; im Handel 21 Liniensysteme auf A4, 14 auf A5 | Mittelband 3,5 mm, 12 mm von Zeile zu Zeile (nachgemessen) |
 | 3R | 3 | wie 3, mit Rand an der Außenseite | wie 3, Rand rechts 33 mm (nachgemessen) |
 | VA | 1 | zwei Liniensysteme in einem: 10:10:10 mm und 5:5:5 mm | obere Hälfte 10 mm, untere Hälfte 5 mm je Band |
+| dm | 2 | Anfängerlineatur mit punktierter Mittellinie und Rand, A5 | 10 mm, gestrichelte Mittellinie 4 mm darüber (Abbildung: 3 mm), Rand 28 mm (nachgemessen) |
+| GS | 1 | Grundschrift, graues Mittelband 7 mm, A4 quer | Mittelband 7 mm grau, Ober- und Unterlänge 5 mm, 26 mm von Zeile zu Zeile (nachgemessen) |
+| GS (5 mm) | 1 bis 2 | Grundschrift, graues Mittelband 5 mm | Mittelband 5 mm grau, Ober- und Unterlänge 3,5 mm, 19,5 mm von Zeile zu Zeile (nachgemessen) |
+| A1 | Vorschule | Linienabstand 2 cm, ohne Rand, A4 quer | 20 mm |
 
 ## Liniert (ab Klasse 4)
 
@@ -67,7 +71,6 @@ aus dieser Tabelle wieder her.
 
 ## Annahmen (weiterhin nicht belegt)
 
-- **SL:** „Liniensysteme in zwei Größen“ ist belegt, die Größen nicht. blanko nimmt 6 mm (wie Lin 0) und 4 mm.
 - **Punktabstand GR** (5 mm): keine Quelle gefunden, üblicher Wert.
 - **Ober- und Unterlänge bei Lin 1 und 2:** Alle Texte sagen „jeweils 5 mm“ bzw. „jeweils 4 mm“. In den Herstellerabbildungen sind Ober- und Unterlänge etwas kleiner gezeichnet (4 : 5 : 4 bzw. 3 : 4 : 3). blanko folgt den Texten, das Verhältnis ist unter „Ober : Mitte : Unter“ umstellbar.
 - **Abstand zwischen den Systemen** ist offenbar nicht fest genormt: Er schwankt je nach Heftformat zwischen 2 und 5 mm. blanko nimmt für A4 5 mm.
@@ -83,5 +86,5 @@ aus dieser Tabelle wieder her.
 ## Bewusst nicht aufgenommen
 
 Diese Nummern gibt es im Handel, ihre Maße waren aber nicht sicher zu klären, oder es sind Hefte mit Vordrucken statt reiner Lineatur:
-12 (Steno), 20, 24, 30, 51, 52, 53, 54, 1G bis 4G (Geschichtenhefte), 3V, 4V, 1F, 4F, SR1, dm, GS, A1, LA.
+12 (Steno), 20, 24, 30, 51, 52, 53, 54, 1G bis 4G (Geschichtenhefte, lassen sich mit dem Baukasten nachbauen), 3V, 4V, 1F, 4F, SR1, LA.
 Wer die genauen Maße kennt: gern als Issue auf GitHub melden, dann kommen sie dazu.

@@ -188,7 +188,8 @@
                         xx += (g.a + .1) * hh;
                     }
                     const lw = o.w || hh * .1;
-                    if (d.length) P.path(d, { c: o.c || '#000000', w: lw, cap: 'round', join: 'round' });
+                    // dash: gepunktete Ziffern zum Nachspuren (runde Enden machen aus kurzen Strichen Punkte)
+                    if (d.length) P.path(d, { c: o.c || '#000000', w: lw, cap: 'round', join: 'round', dash: o.dash ? [.01, lw * 2.4] : null });
                     if (dots.length) P.dots(dots, lw * .75, o.c || '#000000');
                     return P;
                 },

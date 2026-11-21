@@ -15,9 +15,9 @@ Lineatur antippen, drucken, fertig. In Originalgröße, kostenlos, ohne Werbung,
 
 ## Was blanko kann
 
-- **Alle Schul-Lineaturen**, orientiert an DIN 16552-1: SL, 0, 1, 1q, 2, 3, 3R, VA, 4, 9, 21, 25, 25A, 27, R, ZL, 5, 7, 8f, 10, 22, 23, 26, 26A, 28, 29, 40, 47, GR, 6 und 14. Welche Maße genau und woher sie stammen, steht in [docs/lineaturen.md](docs/lineaturen.md).
+- **Alle Schul-Lineaturen**, orientiert an DIN 16552-1: SL, 0, 1, 1q, 2, 3, 3R, VA, dm, GS, A1, 4, 9, 21, 25, 25A, 27, R, ZL, 5, 7, 8f, 10, 22, 23, 26, 26A, 28, 29, 40, 47, GR, 6 und 14. Welche Maße genau und woher sie stammen, steht in [docs/lineaturen.md](docs/lineaturen.md).
 - **Nach Klasse sortiert:** 1. bis 4. Klasse und ab Klasse 5, dazu eine Suche, die „3“, „Lin 3“ und „Lineatur 3“ versteht.
-- **Mathe-Hilfen:** bunte Einmaleins-Tafel (mit Lücken oder leer zum Üben), Einmaleins-Reihen als Übungsblatt mit Lösungsblatt, Hundertertafel, Zahlenstrahl, Stellenwerttafel, Koordinatensystem, Millimeterpapier. Ziffern in Schulschrift, wie Kinder sie lernen.
+- **Mathe-Hilfen:** Rechenblätter bis 20, 100 und 1000 (Plus, Minus, Mal, Geteilt, mit Platzhaltern, ohne Zehnerübergang, mit Lösungsblatt), Ziffern schreiben zum Nachspuren, Uhr lernen, Zahlenmauern und Rechendreiecke, bunte Einmaleins-Tafel (mit Lücken oder leer zum Üben), Einmaleins-Reihen als Übungsblatt mit Lösungsblatt, Hundertertafel, Zahlenstrahl, Stellenwerttafel, Koordinatensystem, Millimeterpapier. Ziffern in Schulschrift, wie Kinder sie lernen.
 - **Papier-Baukasten:** alles in einem Fenster. Art auswählen (liniert, kariert, Punkte, Millimeter, Isometrie, Sechsecke, Notenlinien, Tabelle, Kasten zum Malen), mit Schnellwahl für Lineatur 1 bis 4, Karo 5, 7 und 10 mm und mehr. Bis zu drei Bereiche auf einem Blatt, zum Beispiel oben malen und unten schreiben. Jedes Papier lässt sich mit „Im Baukasten weiterbearbeiten“ dorthin mitnehmen.
 - **Vorlagen:** Stundenplan, Vokabelliste, Hausaufgabenplan, Wochenplan, Malen und Schreiben (Lineatur 1, 2 und 3), Rechengeschichte, Lesetagebuch und Tabellen nach Wunsch.
 - **Favoriten:** Stern auf jeder Karte, die Favoriten stehen ganz oben auf der Startseite und sind über den Stern im Kopf immer mit einem Tipp erreichbar.
@@ -31,6 +31,8 @@ Lineatur antippen, drucken, fertig. In Originalgröße, kostenlos, ohne Werbung,
 - **Meine Blätter**, Favoriten und Einstellungen bleiben nur auf dem eigenen Gerät.
 - **Als App installierbar** (PWA) auf jedem System, mit Anleitung für iPhone, iPad, Android, Mac und PC. Läuft danach offline und holt sich neue Versionen von selbst.
 - **Kein Tracking, keine Datenbank, keine Konten.** Nichts wird von fremden Servern geladen.
+
+Die Startseite ist zweigeteilt: oben alles für die Schule, darunter abgesetzt „Für zu Hause, Hobby und Beruf“ (Planen und Tabellen, Kreativ, Spezialpapiere).
 
 Auf jedem Ausdruck steht unten links „Kostenlos erstellt mit blanko.burnersen.de“ und rechts „Noch mehr cooles Zeugs auf burnersen.de“.
 

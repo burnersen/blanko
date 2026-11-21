@@ -110,15 +110,18 @@
     /* ---------- Liniert: 1 Linie, 2 Linien (Mittelband) oder 4-Linien-System, mit Kontrast und Schräglinien ---------- */
     G.lines = {
         group: 'Linien',
-        def: { sys: 'single', pitch: 9, band: 5, ratio: '1:1:1', gap: 5, band2: 0, mode2: 'half', base: false, dashMid: false, kon: 'none', kc: '#dcefd6', slant: 0, slantGap: 10 },
+        def: { sys: 'single', pitch: 9, band: 5, ratio: '1:1:1', gap: 5, band2: 0, mode2: 'half', n1: 2, pic: false, gs: false, base: false, dashMid: false, kon: 'none', kc: '#dcefd6', slant: 0, slantGap: 10 },
         schema: [
             { k: 'sys', t: 'sel', l: 'Liniensystem', norm: true, opts: [['single', '1 Linie (Schreiblinie)'], ['double', '2 Linien (mit Mittelband)'], ['four', '4 Linien (mit Ober- und Unterlänge)']] },
             { k: 'pitch', t: 'num', l: 'Zeilenabstand', u: 'mm', min: 3, max: 40, step: .5, norm: true, show: o => o.sys !== 'four', hint: 'von Schreiblinie zu Schreiblinie' },
             { k: 'band', t: 'num', l: 'Mittelband', u: 'mm', min: 1.5, max: 30, step: .5, norm: true, show: o => o.sys !== 'single', hint: 'Höhe der kleinen Buchstaben wie a, c, e' },
-            { k: 'ratio', t: 'sel', l: 'Ober : Mitte : Unter', norm: true, show: o => o.sys === 'four', opts: [['1:1:1', '1 : 1 : 1 (Grundschule)'], ['3:4:3', '3 : 4 : 3'], ['2:3:2', '2 : 3 : 2'], ['2:1:2', '2 : 1 : 2'], ['4:5:4', '4 : 5 : 4 (Kalligrafie)'], ['3:2:3', '3 : 2 : 3']] },
+            { k: 'ratio', t: 'sel', l: 'Ober : Mitte : Unter', norm: true, show: o => o.sys === 'four', opts: [['1:1:1', '1 : 1 : 1 (Grundschule)'], ['5:7:5', '5 : 7 : 5 (Grundschrift)'], ['7:10:7', '7 : 10 : 7'], ['3:4:3', '3 : 4 : 3'], ['2:3:2', '2 : 3 : 2'], ['2:1:2', '2 : 1 : 2'], ['4:5:4', '4 : 5 : 4 (Kalligrafie)'], ['3:2:3', '3 : 2 : 3']] },
             { k: 'gap', t: 'num', l: 'Abstand zwischen den Systemen', u: 'mm', min: 0, max: 40, step: .5, norm: true, show: o => o.sys === 'four' },
             { k: 'band2', t: 'num', l: 'Zweite Größe (Mittelband)', u: 'mm', min: 0, max: 30, step: .5, norm: true, show: o => o.sys === 'four', hint: '0 = alle Zeilen gleich groß' },
-            { k: 'mode2', t: 'seg', l: 'Übergang', norm: true, show: o => o.sys === 'four' && +o.band2 > 0, opts: [['half', 'obere/untere Hälfte'], ['linear', 'nach unten kleiner']] },
+            { k: 'mode2', t: 'seg', l: 'Übergang', norm: true, show: o => o.sys === 'four' && +o.band2 > 0, opts: [['count', 'feste Anzahl groß'], ['half', 'obere/untere Hälfte'], ['linear', 'nach unten kleiner']] },
+            { k: 'n1', t: 'num', l: 'Systeme in der ersten Größe', min: 1, max: 20, step: 1, norm: true, show: o => o.sys === 'four' && +o.band2 > 0 && o.mode2 === 'count' },
+            { k: 'pic', t: 'chk', l: 'Bildkasten neben den großen Zeilen', show: o => o.sys === 'four' && +o.band2 > 0 && o.mode2 === 'count' },
+            { k: 'gs', t: 'chk', l: 'Grundschrift-Stil (graues Mittelband, nur Grundlinie)', norm: true, show: o => o.sys === 'four' },
             { k: 'base', t: 'chk', l: 'Schreiblinie kräftiger' },
             { k: 'dashMid', t: 'chk', l: 'Mittellinie gestrichelt', show: o => o.sys !== 'single' },
             { k: 'kon', t: 'sel', l: 'Kontrast (farbig)', norm: true, show: o => o.sys !== 'single', opts: [['none', 'ohne'], ['gaps', 'Zwischenräume farbig'], ['mid', 'Mittelband farbig']] },
@@ -131,16 +134,18 @@
             const bst = o.base ? { w: st.w * 1.8, c: darkC(o.lc, .25) } : st;
             const mst = o.dashMid ? { w: st.w, c: o.lc, dash: [1.2, 1] } : st;
             const H = [], B = [], M = [];   // normale Linien, Schreiblinien, Mittellinien
-            const fills = [];               // farbige Flächen [y, h]
-            const sys = [];                 // Systeme [oben, unten] für den Kontrast
+            const fills = [];               // farbige Flächen [y, h, Farbe]
+            const sys = [];                 // Systeme [oben, unten, Einzug] für den Kontrast
+            const T = [], PIC = [];         // Begrenzungsstriche (Grundschrift), Bildkasten
+            let shift = 0, shiftN = 0;      // die ersten Linien beginnen rechts vom Bildkasten
             if (o.sys === 'four') {
                 const r = String(o.ratio || '1:1:1').split(':').map(Number);
                 const b1 = clamp(num(o.band, 5), 1, 50), b2 = num(o.band2, 0) > 0 ? clamp(+o.band2, 1, 50) : b1, gap = clamp(num(o.gap, 5), 0, 60);
                 let y = A.y0;
-                const list = [];
+                const list = [], n1 = clamp(Math.round(num(o.n1, 2)), 1, 50);
                 for (let n = 0; n < 500; n++) {
                     const t = (y - A.y0) / A.h;
-                    const band = b2 === b1 ? b1 : o.mode2 === 'linear' ? b1 + (b2 - b1) * Math.min(1, t * 1.15) : (t < .5 ? b1 : b2);
+                    const band = b2 === b1 ? b1 : o.mode2 === 'linear' ? b1 + (b2 - b1) * Math.min(1, t * 1.15) : o.mode2 === 'count' ? (n < n1 ? b1 : b2) : (t < .5 ? b1 : b2);
                     const u = band / r[1], O = r[0] * u, Mb = band, U = r[2] * u;
                     if (y + O + Mb + U > A.y1 + 1e-6) break;
                     list.push({ y, O, Mb, U });
@@ -149,13 +154,27 @@
                 // übrigen Platz gleichmäßig oben und unten verteilen
                 const used = list.length ? list[list.length - 1].y + list[list.length - 1].O + list[list.length - 1].Mb + list[list.length - 1].U - A.y0 : 0;
                 const off = (A.h - used) / 2;
-                for (const s of list) {
-                    const y0 = s.y + off;
-                    H.push(y0, y0 + s.O + s.Mb + s.U);
+                // Bildkasten links neben den großen Zeilen (wie im Schreiblernheft)
+                const big = o.pic && b2 !== b1 && o.mode2 === 'count' ? list.slice(0, n1) : [];
+                const picW = big.length ? Math.min(A.w * .28, big[big.length - 1].y + big[big.length - 1].O + big[big.length - 1].Mb + big[big.length - 1].U - big[0].y) : 0;
+                list.forEach((s, i) => {
+                    const y0 = s.y + off, y3 = y0 + s.O + s.Mb + s.U;
+                    if (o.gs) {
+                        // Grundschrift: graues Mittelband, darunter die Grundlinie, an den Enden kurze Begrenzungen
+                        fills.push([y0 + s.O, s.Mb, '#e6e7e9']);
+                        B.push(y0 + s.O + s.Mb);
+                        T.push([A.x0, y0, A.x0, y3], [A.x1, y0, A.x1, y3]);
+                        return;
+                    }
+                    H.push(y0, y3);
                     M.push(y0 + s.O);
                     B.push(y0 + s.O + s.Mb);
-                    sys.push([y0, y0 + s.O + s.Mb + s.U]);
+                    sys.push([y0, y3, i < big.length ? picW + 4 : 0]);
                     if (o.kon === 'mid') fills.push([y0 + s.O, s.Mb]);
+                });
+                if (big.length) {
+                    PIC.push([A.x0, big[0].y + off, picW, picW]);
+                    shift = picW + 4; shiftN = big.length * 2;
                 }
             } else if (o.sys === 'double') {
                 const band = clamp(num(o.band, 3.5), 1, 50), pitch = Math.max(band + 1, clamp(num(o.pitch, 13), 2, 80));
@@ -176,9 +195,11 @@
             // Kontrast: farbiges Blatt, die Schreibzeilen bleiben weiß
             if (o.kon === 'gaps' && sys.length) {
                 P.rect(A.x0, A.y0, A.w, A.h, { fill: o.kc });
-                for (const [a, b] of sys) P.rect(A.x0, a, A.w, b - a, { fill: '#ffffff' });
+                for (const [a, b, ind] of sys) P.rect(A.x0 + (ind || 0), a, A.w - (ind || 0), b - a, { fill: '#ffffff' });
             }
-            for (const [y, h] of fills) P.rect(A.x0, y, A.w, h, { fill: o.kc });
+            for (const [y, h, c] of fills) P.rect(A.x0, y, A.w, h, { fill: c || o.kc });
+            for (const [x, y, w, h] of PIC) P.rect(x, y, w, h, { fill: '#ffffff', c: o.lc, w: st.w * 1.4 });
+            if (T.length) P.lines(T, st);
             // Schräglinien unter den Zeilen
             if (+o.slant > 0) {
                 const a = clamp(+o.slant, 1, 89) * Math.PI / 180, dx = A.h / Math.tan(a), gap = clamp(num(o.slantGap, 10), 2, 80);
@@ -186,10 +207,11 @@
                 for (let x = A.x0 - dx; x < A.x1; x += gap) L.push([x, A.y1, x + dx, A.y0]);
                 P.clip(rectPath(A.x0, A.y0, A.w, A.h)).lines(L, { w: st.w * .7, c: light(o.lc, .35) }).unclip();
             }
-            const hl = ys => ys.map(y => [A.x0, y, A.x1, y]);
-            if (H.length) P.lines(hl(H), st);
-            if (M.length) P.lines(hl(M), mst);
-            if (B.length) P.lines(hl(B), bst);
+            // Linien der großen Systeme neben dem Bildkasten beginnen weiter rechts (H: 2 pro System, M und B: 1)
+            const hl = (ys, per) => ys.map((y, i) => [A.x0 + (i < shiftN / 2 * per ? shift : 0), y, A.x1, y]);
+            if (H.length) P.lines(hl(H, 2), st);
+            if (M.length) P.lines(hl(M, 1), mst);
+            if (B.length) P.lines(hl(B, 1), o.gs ? { w: st.w * 1.6, c: darkC(o.lc, .2) } : bst);
         },
     };
 
@@ -623,6 +645,281 @@
         },
     };
 
+    /* ---------- Gemeinsames für Arbeitsblätter: Ziffern in Schul- oder Druckschrift schreiben und messen ---------- */
+    const SOL = '#2b6cb0';   // Farbe der eingetragenen Lösungen
+    function writer(P, font) {
+        const school = font !== 'print';
+        return {
+            w: (s, h) => school ? P.digitsWidth(s, h) : P.textWidth(s, h * 1.45),
+            put: (x, y, s, h, al, c) => school ? P.digits(x, y, s, { h, al: al || 'l', c: c || '#222222' }) : P.text(x, y, s, { s: h * 1.45, al: al || 'l', c: c || '#222222' }),
+        };
+    }
+    /** Ganze Zufallszahl von a bis b */
+    const rint = (rand, a, b) => a + Math.floor(rand() * (b - a + 1));
+    /** Fläche in ein Raster aus Zellen teilen */
+    function cells(A, n, cols, gap) {
+        const rows = Math.ceil(n / cols), cw = (A.w - (cols - 1) * gap) / cols, ch = (A.h - (rows - 1) * gap) / rows, out = [];
+        for (let i = 0; i < n; i++) out.push({ x: A.x0 + (i % cols) * (cw + gap), y: A.y0 + Math.floor(i / cols) * (ch + gap), w: cw, h: ch });
+        return out;
+    }
+
+    /* ---------- Rechenblätter: Plus, Minus, Mal, Geteilt, mit Platzhaltern und Lösungsblatt ---------- */
+    const OPSYM = { '+': '+', '-': '−', '*': '·', ':': ':' };
+    function task(rand, op, R, noCarry) {
+        for (let t = 0; t < 400; t++) {
+            let a, b, c;
+            if (op === '+') {
+                a = rint(rand, R > 20 ? 2 : 0, R - 1); b = rint(rand, R > 20 ? 1 : 0, R - a); c = a + b;
+                if (R > 10 && c < R * .25) continue;
+                if (noCarry && R > 10 && (a % 10) + (b % 10) > 9) continue;
+                if (noCarry && R > 100 && (Math.floor(a / 10) % 10) + (Math.floor(b / 10) % 10) > 9) continue;
+            } else if (op === '-') {
+                a = rint(rand, R > 20 ? Math.ceil(R * .2) : 1, R); b = rint(rand, 0, a); c = a - b;
+                if (noCarry && R > 10 && (a % 10) < (b % 10)) continue;
+                if (noCarry && R > 100 && (Math.floor(a / 10) % 10) < (Math.floor(b / 10) % 10)) continue;
+            } else {
+                if (R <= 20) { a = rint(rand, 1, R <= 10 ? 5 : 10); b = rint(rand, 1, 10); if (a * b > R) continue; }
+                else if (R <= 100) { a = rint(rand, 1, 10); b = rint(rand, 1, 10); }
+                else { a = rint(rand, 2, 10); b = rint(rand, 2, 100); if (a * b > R) continue; }
+                if (op === '*') c = a * b;
+                else { const p = a * b; [a, b, c] = [p, a, b]; }
+            }
+            return [a, op, b, c];
+        }
+        return [1, '+', 1, 2];
+    }
+    G.arith = {
+        group: 'Rechenaufgaben',
+        def: { ops: '+,-', range: 20, kind: 'result', noCarry: false, count: 30, cols: 3, seed: 5, results: false, font: 'school', title: 'Rechnen', head: 'namedate', lc: '#9a9a9a' },
+        schema: [
+            { k: 'ops', t: 'multi', l: 'Rechenarten', opts: [['+', 'Plus'], ['-', 'Minus'], ['*', 'Mal'], [':', 'Geteilt']] },
+            { k: 'range', t: 'seg', l: 'Zahlenraum', opts: [['10', 'bis 10'], ['20', 'bis 20'], ['100', 'bis 100'], ['1000', 'bis 1000']] },
+            { k: 'kind', t: 'sel', l: 'Aufgabenart', opts: [['result', 'Ergebnis gesucht (3 + 4 = __)'], ['gap', 'Platzhalter (3 + __ = 7)'], ['mixed', 'gemischt']] },
+            { k: 'noCarry', t: 'chk', l: 'Ohne Zehnerübergang', show: o => +o.range > 10 && /[+-]/.test(String(o.ops)) },
+            { k: 'count', t: 'num', l: 'Aufgaben pro Seite', min: 4, max: 60, step: 1 },
+            { k: 'cols', t: 'seg', l: 'Spalten', opts: [['1', '1'], ['2', '2'], ['3', '3'], ['4', '4']] },
+            { k: 'seed', t: 'shuffle', l: 'Neue Aufgaben' },
+            { k: 'results', t: 'chk', l: 'Lösungen eintragen (Lösungsblatt)' },
+            { k: 'font', t: 'seg', l: 'Schrift', opts: [['school', 'Schulschrift'], ['print', 'Druckschrift']] },
+        ],
+        draw(P, A, o, pi) {
+            const ops = String(o.ops || '+').split(',').filter(x => OPSYM[x]);
+            if (!ops.length) ops.push('+');
+            const R = +o.range || 20, n = clamp(Math.round(num(o.count, 30)), 1, 100), cols = clamp(+o.cols || 3, 1, 4);
+            const rand = rng(+o.seed * 7919 + pi * 104729 + 17), seen = new Set(), list = [];
+            for (let i = 0; i < n; i++) {
+                let t;
+                for (let k = 0; k < 30; k++) { t = task(rand, ops[i % ops.length], R, o.noCarry); if (!seen.has(t.join())) break; }
+                seen.add(t.join());
+                const hide = o.kind === 'gap' ? (rand() < .5 ? 0 : 2) : o.kind === 'mixed' ? [0, 2, 3, 3][rint(rand, 0, 3)] : 3;
+                list.push({ t, hide });
+            }
+            // gemischte Rechenarten: Reihenfolge durcheinander
+            for (let i = list.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }
+            const rows = Math.ceil(n / cols), colW = A.w / cols, rowH = Math.min(20, A.h / rows);
+            const h = clamp(rowH * .42, 2.5, 7), W = writer(P, o.font), digW = W.w('0', h);
+            const blank = Math.max(10, digW * (String(R).length + 1.5));
+            list.forEach(({ t, hide }, i) => {
+                const col = Math.floor(i / rows), row = i % rows;
+                let x = A.x0 + col * colW + 2;
+                const y = A.y0 + row * rowH + rowH / 2 + h / 2;
+                const parts = [t[0], OPSYM[t[1]], t[2], '=', t[3]];
+                parts.forEach((part, k) => {
+                    const isHidden = k === (hide === 3 ? 4 : hide);
+                    if (isHidden) {
+                        P.line(x, y + .8, x + blank, y + .8, { w: .3, c: o.lc });
+                        if (o.results) W.put(x + blank / 2, y, String(part), h, 'c', SOL);
+                        x += blank + digW * .6;
+                    } else {
+                        W.put(x, y, String(part), h);
+                        x += W.w(String(part), h) + digW * .6;
+                    }
+                });
+            });
+        },
+    };
+
+    /* ---------- Ziffern schreiben üben: vorgeschrieben, zum Nachspuren gepunktet, dann frei ---------- */
+    G.trace = {
+        group: 'Ziffern',
+        def: { digits: '0,1,2,3,4,5,6,7,8,9', grid: 'box', cell: 10, copies: 4, rowsPer: 1, title: 'Ziffern schreiben', head: 'name', lc: '#b9c3cc' },
+        schema: [
+            { k: 'digits', t: 'multi', l: 'Ziffern', opts: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => [String(i), String(i)]) },
+            { k: 'grid', t: 'seg', l: 'Hintergrund', opts: [['box', 'Kästchen'], ['lines', 'Linien'], ['none', 'ohne']] },
+            { k: 'cell', t: 'seg', l: 'Größe', opts: [['7', 'klein'], ['10', 'mittel'], ['15', 'groß']] },
+            { k: 'copies', t: 'num', l: 'Zum Nachspuren pro Zeile', min: 0, max: 20, step: 1, hint: 'der Rest der Zeile bleibt frei zum Selberschreiben' },
+            { k: 'rowsPer', t: 'num', l: 'Zeilen pro Ziffer', min: 1, max: 5, step: 1 },
+        ],
+        draw(P, A, o) {
+            let list = String(o.digits || '').split(',').filter(x => /^\d$/.test(x));
+            if (!list.length) list = ['1'];
+            const c = clamp(+o.cell || 10, 4, 30), pitch = c * 2, h = c * .82;
+            const rows = Math.floor((A.h + c) / pitch), cols = Math.floor(A.w / c);
+            const x0 = A.x0 + (A.w - cols * c) / 2, y0 = A.y0;
+            const st = { w: num(o.lw, .2), c: o.lc };
+            if (o.grid === 'box') {
+                const L = [], H = Math.min(A.h, rows * pitch);
+                for (let i = 0; i <= cols; i++) L.push([x0 + i * c, y0, x0 + i * c, y0 + H]);
+                for (let r = 0; r <= H / c + 1e-6; r++) L.push([x0, y0 + r * c, x0 + cols * c, y0 + r * c]);
+                P.lines(L, st);
+            }
+            const per = clamp(Math.round(num(o.rowsPer, 1)), 1, 10), copies = clamp(Math.round(num(o.copies, 4)), 0, 40);
+            for (let r = 0; r < rows; r++) {
+                const d = list[Math.floor(r / per) % list.length];
+                if (Math.floor(r / per) >= list.length) break;
+                const base = y0 + r * pitch + c - (c - h) / 2;
+                if (o.grid === 'lines') {
+                    P.lines([[x0, base - h, x0 + cols * c, base - h], [x0, base - h / 2, x0 + cols * c, base - h / 2]], { ...st, dash: [1, 1] });
+                    P.line(x0, base, x0 + cols * c, base, { w: st.w * 1.8, c: darkC(o.lc, .3) });
+                }
+                for (let k = 0, x = x0 + c / 2; x < x0 + cols * c; k++, x += c * 2) {
+                    if (k === 0) P.digits(x, base, d, { h, al: 'c', c: '#222222', w: h * .09 });
+                    else if (k <= copies) P.digits(x, base, d, { h, al: 'c', c: '#9aa3ad', w: h * .09, dash: true });
+                }
+            }
+        },
+    };
+
+    /* ---------- Uhr lernen: Uhrzeit ablesen oder Zeiger einzeichnen ---------- */
+    const p2 = n => String(n).padStart(2, '0');
+    G.clock = {
+        group: 'Uhren',
+        def: { mode: 'read', count: 6, step: 'half', nums: true, h24: false, mins: false, seed: 9, results: false, title: 'Wie spät ist es?', head: 'name', lc: '#333333' },
+        schema: [
+            { k: 'mode', t: 'sel', l: 'Aufgabe', opts: [['read', 'Uhrzeit ablesen (Zeiger sind gezeichnet)'], ['draw', 'Zeiger einzeichnen (Uhrzeit steht darunter)'], ['blank', 'leere Uhren']] },
+            { k: 'count', t: 'seg', l: 'Uhren pro Seite', opts: [['4', '4'], ['6', '6'], ['9', '9'], ['12', '12']] },
+            { k: 'step', t: 'sel', l: 'Uhrzeiten', show: o => o.mode !== 'blank', opts: [['full', 'volle Stunden'], ['half', 'halbe Stunden'], ['quarter', 'Viertelstunden'], ['5', 'in 5-Minuten-Schritten'], ['1', 'jede Minute']] },
+            { k: 'nums', t: 'chk', l: 'Zahlen 1 bis 12' },
+            { k: 'h24', t: 'chk', l: 'Zahlen 13 bis 24 (innen)' },
+            { k: 'mins', t: 'chk', l: 'Minuten außen (5, 10, 15 …)' },
+            { k: 'seed', t: 'shuffle', l: 'Neue Uhrzeiten', show: o => o.mode !== 'blank' },
+            { k: 'results', t: 'chk', l: 'Lösungen eintragen', show: o => o.mode !== 'blank' },
+        ],
+        draw(P, A, o, pi) {
+            const n = +o.count || 6, cols = n <= 6 ? 2 : 3, rand = rng(+o.seed * 3301 + pi * 77 + 9);
+            const step = { full: 60, half: 30, quarter: 15, 5: 5, 1: 1 }[o.step] || 30;
+            const lab = o.mode === 'blank' ? 0 : 12;
+            cells(A, n, cols, 6).forEach(C => {
+                const r = Math.min(C.w, C.h - lab) / 2 * (o.mins ? .78 : .9), cx = C.x + C.w / 2, cy = C.y + (C.h - lab) / 2;
+                const hh = rint(rand, 1, 12), mm = rint(rand, 0, 60 / step - 1) * step;
+                P.circle(cx, cy, r, { w: Math.max(.5, r * .025), c: o.lc, fill: '#ffffff' });
+                const T1 = [], T5 = [];
+                for (let i = 0; i < 60; i++) {
+                    const a = i * Math.PI / 30, big = i % 5 === 0, r2 = r * (big ? .87 : .93);
+                    (big ? T5 : T1).push([cx + Math.sin(a) * r2, cy - Math.cos(a) * r2, cx + Math.sin(a) * r * .985, cy - Math.cos(a) * r * .985]);
+                }
+                P.lines(T1, { w: r * .008 + .1, c: o.lc }).lines(T5, { w: r * .022 + .15, c: o.lc });
+                for (let i = 1; i <= 12; i++) {
+                    const a = i * Math.PI / 6;
+                    if (o.nums) { const h = r * .15; P.digits(cx + Math.sin(a) * r * .72, cy - Math.cos(a) * r * .72 + h / 2, String(i), { h, al: 'c', c: '#222222' }); }
+                    if (o.h24) { const h = r * .085; P.digits(cx + Math.sin(a) * r * .52, cy - Math.cos(a) * r * .52 + h / 2, String(i + 12 === 24 ? 24 : i + 12), { h, al: 'c', c: '#777777' }); }
+                    if (o.mins) { const h = r * .085; P.digits(cx + Math.sin(a) * r * 1.13, cy - Math.cos(a) * r * 1.13 + h / 2, p2(i * 5 % 60), { h, al: 'c', c: '#2b6cb0' }); }
+                }
+                const showHands = o.mode === 'read' || (o.mode === 'draw' && o.results);
+                if (showHands) {
+                    const ah = ((hh % 12) + mm / 60) * Math.PI / 6, am = mm * Math.PI / 30;
+                    const col = o.mode === 'draw' ? SOL : '#222222';
+                    P.line(cx, cy, cx + Math.sin(ah) * r * .5, cy - Math.cos(ah) * r * .5, { w: r * .06, c: col, cap: 'round' });
+                    P.line(cx, cy, cx + Math.sin(am) * r * .8, cy - Math.cos(am) * r * .8, { w: r * .035, c: col, cap: 'round' });
+                }
+                P.circle(cx, cy, r * .035, { fill: '#222222' });
+                if (!lab) return;
+                const y = C.y + C.h - 2.5, h = 5;
+                if (o.mode === 'draw') {
+                    const t = hh + ':' + p2(mm);
+                    const w = P.digitsWidth(t, h) + 2 + P.textWidth('Uhr', h * 1.3);
+                    P.digits(cx - w / 2, y, t, { h, c: '#222222' }).text(cx - w / 2 + P.digitsWidth(t, h) + 2, y, 'Uhr', { s: h * 1.3, c: '#222222' });
+                } else {
+                    const bw = 14, x = cx - (bw * 2 + 4 + 12) / 2;
+                    P.line(x, y + .6, x + bw, y + .6, { w: .3, c: '#888888' }).digits(x + bw + 2, y, ':', { h, al: 'c' }).line(x + bw + 4, y + .6, x + 2 * bw + 4, y + .6, { w: .3, c: '#888888' });
+                    P.text(x + 2 * bw + 6, y, 'Uhr', { s: h * 1.3, c: '#222222' });
+                    if (o.results) P.digits(x + bw / 2, y - .4, String(hh), { h, al: 'c', c: SOL }).digits(x + bw * 1.5 + 4, y - .4, p2(mm), { h, al: 'c', c: SOL });
+                }
+            });
+        },
+    };
+
+    /* ---------- Zahlenmauern und Rechendreiecke ---------- */
+    G.wall = {
+        group: 'Zahlenmauern',
+        def: { kind: 'wall', levels: 3, range: 20, fill: 'bottom', count: 6, seed: 4, results: false, scheme: 'rainbow', font: 'school', title: 'Zahlenmauern', head: 'name', lc: '#555555' },
+        schema: [
+            { k: 'kind', t: 'seg', l: 'Art', opts: [['wall', 'Zahlenmauern'], ['tri', 'Rechendreiecke']] },
+            { k: 'levels', t: 'seg', l: 'Stufen', show: o => o.kind === 'wall', opts: [['3', '3'], ['4', '4'], ['5', '5']] },
+            { k: 'range', t: 'seg', l: 'Zahlenraum', opts: [['10', 'bis 10'], ['20', 'bis 20'], ['100', 'bis 100'], ['1000', 'bis 1000']] },
+            { k: 'fill', t: 'sel', l: 'Vorgegeben', opts: [['bottom', 'die unteren Zahlen (bzw. innen)'], ['mixed', 'gemischt, zum Knobeln'], ['empty', 'nichts, selbst ausdenken']] },
+            { k: 'count', t: 'num', l: 'Anzahl pro Seite', min: 1, max: 12, step: 1 },
+            { k: 'seed', t: 'shuffle', l: 'Neue Zahlen', show: o => o.fill !== 'empty' },
+            { k: 'results', t: 'chk', l: 'Lösungen eintragen', show: o => o.fill !== 'empty' },
+            { k: 'scheme', t: 'sel', l: 'Farben', opts: [['rainbow', 'bunt'], ['pastel', 'Pastell'], ['gray', 'Graustufen'], ['none', 'ohne']] },
+            { k: 'font', t: 'seg', l: 'Schrift', opts: [['school', 'Schulschrift'], ['print', 'Druckschrift']] },
+        ],
+        draw(P, A, o, pi) {
+            const R = +o.range || 20, n = clamp(Math.round(num(o.count, 6)), 1, 20), rand = rng(+o.seed * 6007 + pi * 131 + 1);
+            const W = writer(P, o.font), st = { w: .45, c: o.lc };
+            const colorOf = i => o.scheme === 'none' ? '#ffffff' : o.scheme === 'gray' ? (i % 2 ? '#ececec' : '#f6f6f6') : light(numColor(i + 1, 'rainbow'), o.scheme === 'pastel' ? .78 : .62);
+            const cols = n <= 2 ? 1 : n <= 8 ? 2 : 3;
+            const C = cells(A, n, cols, 8);
+            const cell = (x, y, w, hgt, val, shown, fill) => {
+                P.rect(x, y, w, hgt, { fill, c: o.lc, w: st.w });
+                if (val == null) return;
+                if (shown) W.put(x + w / 2, y + hgt / 2 + hgt * .2, String(val), hgt * .4, 'c');
+                else if (o.results) W.put(x + w / 2, y + hgt / 2 + hgt * .2, String(val), hgt * .4, 'c', SOL);
+            };
+            C.forEach((B, idx) => {
+                if (o.kind === 'tri') {
+                    // Innenfelder a, b, c in den Ecken, außen die Summen der Nachbarn
+                    let a, b, c;
+                    for (let t = 0; t < 300; t++) { a = rint(rand, 0, Math.floor(R / 2)); b = rint(rand, 0, Math.floor(R / 2)); c = rint(rand, 0, Math.floor(R / 2)); if (Math.max(a + b, b + c, a + c) <= R && a + b + c > R * .3) break; }
+                    const s = Math.min(B.w, B.h * 1.1) * .78, cx = B.x + B.w / 2, hgt = s * Math.sqrt(3) / 2, top = B.y + (B.h - hgt) / 2 + 2;
+                    const V = [[cx, top], [cx - s / 2, top + hgt], [cx + s / 2, top + hgt]];
+                    P.polyline(V, { w: .6, c: o.lc, fill: colorOf(idx) }, true);
+                    const g = [cx, top + hgt * 2 / 3], box = s * .19;
+                    const inner = V.map(v => [g[0] + (v[0] - g[0]) * .55, g[1] + (v[1] - g[1]) * .55]);
+                    const vals = [a, b, c], sums = [a + b, b + c, a + c], sumPos = [[0, 1], [1, 2], [0, 2]];
+                    const showIn = [true, true, true], showOut = [false, false, false];
+                    if (o.fill === 'mixed') {
+                        // ein Innenfeld fehlt, dafür steht eine Summe daneben, in der es steckt
+                        const k = rint(rand, 0, 2);
+                        showIn[k] = false;
+                        const withK = sumPos.map((pr, j) => pr.includes(k) ? j : -1).filter(j => j >= 0);
+                        showOut[withK[rint(rand, 0, withK.length - 1)]] = true;
+                    }
+                    inner.forEach((p, i) => cell(p[0] - box / 2, p[1] - box / 2, box, box, o.fill === 'empty' ? null : vals[i], showIn[i], '#ffffff'));
+                    sumPos.forEach(([i, j], k) => {
+                        const m = [(V[i][0] + V[j][0]) / 2, (V[i][1] + V[j][1]) / 2], d = [m[0] - g[0], m[1] - g[1]], L = Math.hypot(d[0], d[1]);
+                        const p = [m[0] + d[0] / L * box * .9, m[1] + d[1] / L * box * .9];
+                        cell(p[0] - box * .65, p[1] - box / 2, box * 1.3, box, o.fill === 'empty' ? null : sums[k], showOut[k], '#ffffff');
+                    });
+                    return;
+                }
+                const L = +o.levels || 3;
+                let base = [];
+                const weights = [];
+                for (let i = 0; i < L; i++) { let w = 1; for (let k = 0; k < i; k++) w = w * (L - 1 - k) / (k + 1); weights.push(Math.round(w)); }
+                for (let t = 0; t < 400; t++) {
+                    const max = Math.max(1, Math.floor(R / weights.reduce((x, y) => x + y, 0) * 1.8));
+                    base = Array.from({ length: L }, () => rint(rand, R > 10 ? 1 : 0, max));
+                    const top = base.reduce((s, v, i) => s + v * weights[i], 0);
+                    if (top <= R && top >= R * .35) break;
+                }
+                const rowsV = [base];
+                for (let r = 1; r < L; r++) rowsV.push(rowsV[r - 1].slice(1).map((v, i) => v + rowsV[r - 1][i]));
+                const shown = rowsV.map((row, r) => row.map(() => r === 0));
+                if (o.fill === 'mixed') {
+                    const hide = L >= 4 ? [rint(rand, 0, 1), rint(rand, L - 2, L - 1)] : [rint(rand, 0, L - 1)];
+                    for (const i of hide) { shown[0][i] = false; const p = i < L - 1 ? i : i - 1; shown[1][p] = true; }
+                }
+                const bw = Math.min(B.w * .96 / L, B.h * .9 * 2 / L, 34), bh = bw * .5;
+                const yb = B.y + B.h / 2 + L * bh / 2 - bh;
+                rowsV.forEach((row, r) => {
+                    const w0 = B.x + B.w / 2 - row.length * bw / 2;
+                    row.forEach((v, i) => cell(w0 + i * bw, yb - r * bh, bw, bh, o.fill === 'empty' ? null : v, shown[r][i], r === 0 ? colorOf(idx) : '#ffffff'));
+                });
+            });
+        },
+    };
+
     /* ---------- Storyboard und Comic ---------- */
     G.story = {
         group: 'Bilder',
@@ -881,12 +1178,13 @@
             P.lines(L, st);
             if (o.thead) P.line(A.x0, A.y0 + headH, A.x1, A.y0 + headH, { w: st.w * 2.2, c: o.lc });
             const hs = Math.min(4.2, headH * .42);
-            if (o.thead) for (let c = 0; c < cols; c++) if (heads[c]) P.text((xs[c] + xs[c + 1]) / 2, A.y0 + headH / 2 + hs * .36, heads[c], { s: hs, b: true, al: 'c', c: '#222222' });
+            const fitS = (t, size, w, bold) => { const tw = P.textWidth(t, size, bold); return tw > w ? Math.max(1.2, size * w / tw) : size; };
+            if (o.thead) for (let c = 0; c < cols; c++) if (heads[c]) { const fs = fitS(heads[c], hs, xs[c + 1] - xs[c] - 2, true); P.text((xs[c] + xs[c + 1]) / 2, A.y0 + headH / 2 + fs * .36, heads[c], { s: fs, b: true, al: 'c', c: '#222222' }); }
             const labels = splitList(o.rowLabels).filter((v, i, a) => a.length > 1 || v);
             const ls = Math.min(3.8, rowH * .42);
             for (let r = 0; r < rows; r++) {
                 const t = o.num ? (r + 1) + '.' : labels[r] || '';
-                if (t) P.text(xs[0] + 1.8, A.y0 + headH + r * rowH + rowH / 2 + ls * .36, t, { s: ls, c: '#333333' });
+                if (t) { const fs = fitS(t, ls, xs[1] - xs[0] - 3); P.text(xs[0] + 1.8, A.y0 + headH + r * rowH + rowH / 2 + fs * .36, t, { s: fs, c: '#333333' }); }
             }
         },
     };
@@ -1028,7 +1326,7 @@
             if (s.t === 'num') out[s.k] = clamp(num(out[s.k], base[s.k]), s.min, s.max);
             else if (s.t === 'chk') out[s.k] = !!out[s.k];
             else if (s.t === 'color' && !/^#[0-9a-f]{6}$/i.test(out[s.k])) out[s.k] = base[s.k];
-            else if (s.t === 'text') out[s.k] = String(out[s.k] == null ? '' : out[s.k]).slice(0, 200);
+            else if (s.t === 'text') out[s.k] = String(out[s.k] == null ? '' : out[s.k]).slice(0, 2000);
         }
         return out;
     }

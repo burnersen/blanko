@@ -195,16 +195,21 @@
                 !fav.length ? h('p', { class: 'favhint' }, 'Tipp: Tippe bei einem Papier auf den Stern ☆, dann steht es hier ganz oben und du musst nicht mehr suchen.') : null),
             mine.length ? section('Meine Blätter', 'selbst eingestellt und gespeichert', mine.map((m, i) => card(BYID[m.id], { o: m.o, name: m.name, sub: BYID[m.id].name, mine: i }))) : null,
             recent.length ? section('Zuletzt benutzt', '', recent.map(id => card(BYID[id]))) : null,
-            CAT.cats.map(c => {
-                const list = PAPERS.filter(p => p.cat === c.id);
-                const s = section(c.name, c.sub, list.map(p => card(p)));
-                if (c.id === 'spezial') {
-                    s.classList.add('special');
-                    s.insertBefore(h('p', null, 'Für Technik, Studium und Sprachen. Für die Grundschule brauchst du die meistens nicht.'), s.children[1]);
-                }
-                return s;
-            }),
+            h('h2', { class: 'areahead' }, 'Für die Schule'),
+            CAT.cats.filter(c => c.area !== 'frei').map(catSection),
+            h('div', { class: 'area free' },
+                h('h2', { class: 'areahead' }, 'Für zu Hause, Hobby und Beruf'),
+                h('p', { class: 'muted' }, 'Planen, gestalten und alles, was nicht direkt mit der Schule zu tun hat.'),
+                CAT.cats.filter(c => c.area === 'frei').map(catSection)),
             footer());
+    }
+    function catSection(c) {
+        const s = section(c.name, c.sub, PAPERS.filter(p => p.cat === c.id).map(p => card(p)));
+        if (c.id === 'spezial') {
+            s.classList.add('special');
+            s.insertBefore(h('p', null, 'Für Technik, Studium und Sprachen. Für die Grundschule brauchst du die meistens nicht.'), s.children[1]);
+        }
+        return s;
     }
     function section(title, sub, cards) {
         return h('section', { class: 'sec' }, h('h2', null, title, sub ? h('small', null, sub) : null), h('div', { class: 'grid' }, cards));
@@ -470,7 +475,7 @@
                 node = h('div', { class: 'swatches' }, sws, pick);
                 upd = () => { sws.forEach((b, i) => b.classList.toggle('sel', opts[i][0].toLowerCase() === String(o[s.k]).toLowerCase())); pick.value = o[s.k]; };
             } else if (s.t === 'text') {
-                const inp = h('input', { class: 'txt', type: 'text', maxlength: 80, placeholder: s.ph || '', 'aria-label': s.l, oninput: () => setVal(s.k, inp.value) });
+                const inp = h('input', { class: 'txt', type: 'text', maxlength: 2000, placeholder: s.ph || '', 'aria-label': s.l, oninput: () => setVal(s.k, inp.value) });
                 node = inp; upd = () => { if (document.activeElement !== inp) inp.value = o[s.k] || ''; };
             } else if (s.t === 'preset') {
                 const sel = h('select', { class: 'preset', 'aria-label': s.l, onchange: () => {

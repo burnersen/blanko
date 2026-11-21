@@ -1,17 +1,18 @@
 {
   "cats": [
-    {"id": "schreiben", "name": "Schreiben lernen", "sub": "Klasse 1 bis 3: Schreiblern-Lineaturen mit Hilfslinien"},
-    {"id": "liniert", "name": "Liniert", "sub": "Ab Klasse 4: eine Schreiblinie, mit oder ohne Rand"},
-    {"id": "kariert", "name": "Kariert und rautiert", "sub": "Rechenkästchen von 5 bis 10 mm, mit oder ohne Rand"},
-    {"id": "mathe", "name": "Mathe-Hilfen", "sub": "Einmaleins, Hundertertafel, Zahlenstrahl und mehr"},
-    {"id": "vorlagen", "name": "Baukasten und Vorlagen", "sub": "Eigenes Papier, Stundenplan, Vokabeln, Malen und Schreiben"},
-    {"id": "blanko", "name": "Blanko und Punkte", "sub": "Leere Blätter, Punktraster"},
-    {"id": "musik", "name": "Musik", "sub": "Notenlinien"},
-    {"id": "kreativ", "name": "Kreativ", "sub": "Isometrie, Sechsecke, Storyboard, Comic, Kalligrafie"},
-    {"id": "spezial", "name": "Spezialpapiere", "sub": "Für Technik, Studium, Sprachen und den Druckertest"}
+    {"id": "schreiben", "name": "Schreiben lernen", "sub": "Klasse 1 bis 3: Schreiblern-Lineaturen mit Hilfslinien", "area": "schule"},
+    {"id": "liniert", "name": "Liniert", "sub": "Ab Klasse 4: eine Schreiblinie, mit oder ohne Rand", "area": "schule"},
+    {"id": "kariert", "name": "Kariert und rautiert", "sub": "Rechenkästchen von 5 bis 10 mm, mit oder ohne Rand", "area": "schule"},
+    {"id": "mathe", "name": "Mathe-Hilfen", "sub": "Rechenblätter, Einmaleins, Uhr, Zahlenmauern und mehr", "area": "schule"},
+    {"id": "vorlagen", "name": "Vorlagen für die Schule", "sub": "Stundenplan, Vokabeln, Hausaufgaben, Malen und Schreiben", "area": "schule"},
+    {"id": "blanko", "name": "Blanko und Punkte", "sub": "Leere Blätter, Punktraster", "area": "schule"},
+    {"id": "musik", "name": "Musik", "sub": "Notenlinien", "area": "schule"},
+    {"id": "alltag", "name": "Planen und Tabellen", "sub": "Papier-Baukasten, Tabellen, Wochenplan", "area": "frei"},
+    {"id": "kreativ", "name": "Kreativ", "sub": "Isometrie, Sechsecke, Storyboard, Comic, Kalligrafie", "area": "frei"},
+    {"id": "spezial", "name": "Spezialpapiere", "sub": "Für Technik, Studium, Sprachen und den Druckertest", "area": "frei"}
   ],
   "papers": [
-    {"id": "lin-sl", "nr": "SL", "name": "Lineatur SL (Schreiblernheft)", "short": "4 Linien in zwei Größen, Kontrast, Querformat", "desc": "Das Schreiblernheft für den Anfang der 1. Klasse: große Vier-Linien-Systeme mit farbigen Zwischenräumen, oben größer, unten kleiner.", "cat": "schreiben", "grades": [1], "tags": ["schreiblernheft", "schreiben lernen", "erste klasse", "kontrast", "4 linien", "vierliniensystem"], "gen": "lines", "def": {"ori": "q", "sys": "four", "band": 6, "ratio": "1:1:1", "gap": 5, "band2": 4, "mode2": "half", "kon": "gaps"}, "src": "Orientiert an DIN 16552-1: 4 Linien, 6 mm, die Zeilen werden nach unten kleiner, mit Kontrast, A4 quer. Die zweite Größe (4 mm) ist eine Annahme."},
+    {"id": "lin-sl", "nr": "SL", "name": "Lineatur SL (Schreiblernheft)", "short": "2 große und 4 kleinere Systeme, Bildkasten, Kontrast", "desc": "Das Schreiblernheft für den Anfang der 1. Klasse: oben zwei große Vier-Linien-Systeme neben einem Bildkasten, darunter vier kleinere, mit farbigen Zwischenräumen.", "cat": "schreiben", "grades": [1], "tags": ["schreiblernheft", "schreiben lernen", "erste klasse", "kontrast", "4 linien", "vierliniensystem"], "gen": "lines", "def": {"ori": "q", "sys": "four", "band": 10, "ratio": "1:1:1", "gap": 10, "band2": 6, "mode2": "count", "n1": 2, "pic": true, "kon": "gaps"}, "src": "Herstellerkatalog: A4 quer, Liniensysteme in zwei Größen, mit Kontrastlineatur. Größen aus der maßstäblichen Abbildung nachgemessen: oben 2 Systeme mit etwa 10 mm, darunter 4 Systeme mit etwa 6 mm je Band (6 mm nennt auch DIN 16552-1)."},
 
     {"id": "lin-0", "nr": "0", "name": "Lineatur 0", "short": "4 Linien je 6 mm, Kontrast, A5 quer", "desc": "Für die ersten Schreibversuche in der 1. Klasse: extragroße Vier-Linien-Systeme mit je 6 mm und farbigen Zwischenräumen, 5 Systeme auf einer A5-Seite im Querformat.", "cat": "schreiben", "grades": [1], "tags": ["lineatur 0", "erste klasse", "kontrast", "4 linien"], "gen": "lines", "def": {"fmt": "A5x2", "ori": "q", "sys": "four", "band": 6, "gap": 8, "band2": 0, "kon": "gaps"}, "src": "Orientiert an DIN 16552-1: 4 Linien, Abstand jeweils 6 mm, mit Kontrast, A5 quer, 5 Liniensysteme. Der Abstand zwischen den Systemen (8 mm) ist aus Herstellerabbildungen nachgemessen."},
 
@@ -26,6 +27,14 @@
     {"id": "lin-3r", "nr": "3R", "name": "Lineatur 3R (mit Rand)", "short": "wie Lineatur 3, mit Rand", "desc": "Wie Lineatur 3 mit 3,5 mm Mittelband, dazu ein Rand an der Außenseite für Korrekturen.", "cat": "schreiben", "grades": [3], "tags": ["lineatur 3r", "3 r", "dritte klasse", "rand"], "gen": "lines", "def": {"sys": "double", "band": 3.5, "pitch": 12, "rand": "r", "randW": 33}, "src": "Orientiert an DIN 16552-1: wie 3, mit Rand an der Außenseite. Die Randbreite (gut 3 cm) ist aus Herstellerabbildungen nachgemessen."},
 
     {"id": "lin-va", "nr": "VA", "name": "Lineatur VA (zwei Größen)", "short": "4 Linien in 10 mm und 5 mm", "desc": "Schreiblernpapier mit zwei Liniensystemen: oben ganz groß mit 10 mm, unten in der Größe von Lineatur 1 mit 5 mm.", "cat": "schreiben", "grades": [1], "tags": ["lineatur va", "va", "zwei größen", "erste klasse", "groß"], "gen": "lines", "def": {"sys": "four", "band": 10, "gap": 6, "band2": 5, "mode2": "half"}, "src": "Zwei unterschiedliche Liniensysteme in einem: 10:10:10 mm und 5:5:5 mm."},
+
+    {"id": "lin-dm", "nr": "dm", "name": "Lineatur dm", "short": "10 mm mit punktierter Mittellinie, Rand, 2. Klasse", "desc": "Die Anfängerlineatur für die 2. Klasse: eine Schreiblinie alle 10 mm, darüber eine punktierte Mittellinie als Hilfe für die kleinen Buchstaben, mit Rand.", "cat": "schreiben", "grades": [2], "tags": ["lineatur dm", "dm", "punktierte mittellinie", "hilfslinie", "zweite klasse"], "gen": "lines", "def": {"sys": "double", "band": 4, "pitch": 10, "dashMid": true, "rand": "r", "randW": 28}, "src": "Herstellerkatalog: Anfängerlineatur (2. Schuljahr) mit punktierter Mittellinie mit Rand, A5. Vorlagen nennen die Mittellinie 4 mm über der Schreiblinie, in der Herstellerabbildung sind es 3 mm. Randbreite (28 mm) nachgemessen."},
+
+    {"id": "lin-gs", "nr": "GS", "name": "Lineatur GS (Grundschrift 7 mm)", "short": "graues Mittelband 7 mm, A4 quer", "desc": "Lineatur für die Grundschrift: ein graues Mittelband für die kleinen Buchstaben, darunter die Schreiblinie, kurze Begrenzungen an den Rändern. Große Ausgabe mit 7 mm.", "cat": "schreiben", "grades": [1], "tags": ["lineatur gs", "gs", "grundschrift", "graues mittelband", "erste klasse"], "gen": "lines", "def": {"ori": "q", "sys": "four", "band": 7, "ratio": "5:7:5", "gap": 9, "gs": true}, "src": "Herstellerkatalog: Heft GS, A4 quer, graues Mittelband 7 mm. Ober- und Unterlänge (5 mm) und Zeilenabstand (26 mm) aus der maßstäblichen Abbildung nachgemessen."},
+
+    {"id": "lin-gs5", "nr": "GS", "name": "Lineatur GS (Grundschrift 5 mm)", "short": "graues Mittelband 5 mm, A4", "desc": "Wie die Grundschrift-Lineatur GS, aber kleiner: graues Mittelband 5 mm, für das Ende der 1. und die 2. Klasse.", "cat": "schreiben", "grades": [1, 2], "tags": ["lineatur gs", "gs", "grundschrift", "graues mittelband", "5 mm"], "gen": "lines", "def": {"sys": "four", "band": 5, "ratio": "7:10:7", "gap": 7.5, "gs": true}, "src": "Herstellerkatalog: Heft GS, graues Mittelband 5 mm. Ober- und Unterlänge (3,5 mm) und Zeilenabstand (19,5 mm) aus der maßstäblichen Abbildung nachgemessen."},
+
+    {"id": "lin-a1", "nr": "A1", "name": "Lineatur A1 (2 cm)", "short": "Linien alle 2 cm, A4 quer, Vorschule", "desc": "Sehr große Linien im Abstand von 2 cm, für Vorschulkinder oder Kinder mit starkem Förderbedarf.", "cat": "schreiben", "grades": [1], "tags": ["lineatur a1", "a1", "vorschule", "förderbedarf", "2 cm", "sehr groß"], "gen": "lines", "def": {"ori": "q", "sys": "single", "pitch": 20}, "src": "Herstellerkatalog: Heft A1, Linienabstand 2 cm, ohne Rand, A4 quer. Für Vorschulkinder oder Kinder mit starkem Förderbedarf."},
 
     {"id": "lin-4", "nr": "4", "name": "Lineatur 4", "short": "1 Linie, 10 mm, 4. Klasse", "desc": "Für die 4. Klasse: nur noch eine Schreiblinie, 10 mm Abstand, ohne Rand.", "cat": "liniert", "grades": [4], "tags": ["lineatur 4", "vierte klasse", "liniert", "10 mm"], "gen": "lines", "def": {"sys": "single", "pitch": 10}, "src": "Orientiert an DIN 16552-1: 1 Linie, 10 mm, A5."},
 
@@ -71,6 +80,20 @@
 
     {"id": "kariert-frei", "nr": "", "name": "Kariert nach Wunsch", "short": "Kästchengröße frei wählbar", "desc": "Karopapier in genau der Größe, die du brauchst, auch rautiert oder mit kräftigen Linien alle paar Kästchen.", "cat": "kariert", "grades": [], "tags": ["kariert", "karopapier", "kästchen", "raster", "eigene größe"], "gen": "grid", "def": {"cw": 5, "ch": 5}},
 
+    {"id": "rechnen-20", "nr": "", "name": "Rechenblatt bis 20", "short": "Plus und Minus, mit Lösungsblatt", "desc": "Rechenaufgaben im Zahlenraum bis 20 in Schulschrift: Plus und Minus, auf Wunsch mit Platzhaltern, ohne Zehnerübergang und mit Lösungsblatt. Jedes Mal neue Aufgaben.", "cat": "mathe", "grades": [1, 2], "tags": ["rechenblatt", "rechenaufgaben", "arbeitsblatt", "plus", "minus", "addition", "subtraktion", "bis 20", "zahlenraum 20", "übungsblatt"], "gen": "arith", "def": {"range": 20}},
+
+    {"id": "rechnen-100", "nr": "", "name": "Rechenblatt bis 100", "short": "Plus, Minus, Mal und Geteilt", "desc": "Rechenaufgaben im Zahlenraum bis 100: Plus, Minus, Mal und Geteilt, gemischt oder einzeln, mit Lösungsblatt.", "cat": "mathe", "grades": [2, 3], "tags": ["rechenblatt", "rechenaufgaben", "arbeitsblatt", "plus", "minus", "mal", "geteilt", "bis 100", "zahlenraum 100", "einmaleins"], "gen": "arith", "def": {"range": 100, "ops": "+,-,*,:"}},
+
+    {"id": "rechnen-1000", "nr": "", "name": "Rechenblatt bis 1000", "short": "Kopfrechnen im Tausenderraum", "desc": "Rechenaufgaben im Zahlenraum bis 1000 zum Kopfrechnen, mit Lösungsblatt.", "cat": "mathe", "grades": [3, 4], "tags": ["rechenblatt", "rechenaufgaben", "arbeitsblatt", "bis 1000", "zahlenraum 1000", "kopfrechnen"], "gen": "arith", "def": {"range": 1000, "cols": 2, "count": 24}},
+
+    {"id": "ziffern", "nr": "", "name": "Ziffern schreiben üben", "short": "vorgeschrieben und zum Nachspuren", "desc": "Die Ziffern 0 bis 9 zum Üben: vorne vorgeschrieben, dann gepunktet zum Nachspuren, der Rest der Zeile zum Selberschreiben. In Kästchen oder auf Linien.", "cat": "mathe", "grades": [1], "tags": ["ziffern", "zahlen schreiben", "nachspuren", "schwungübung", "erste klasse", "ziffernschreibkurs"], "gen": "trace", "def": {}},
+
+    {"id": "uhr", "nr": "", "name": "Uhr lernen", "short": "Uhrzeit ablesen oder Zeiger einzeichnen", "desc": "Uhren zum Üben: Uhrzeit ablesen oder Zeiger einzeichnen, von vollen Stunden bis auf die Minute genau, mit Lösungsblatt.", "cat": "mathe", "grades": [2, 3], "tags": ["uhr", "uhrzeit", "uhr lernen", "zifferblatt", "zeit", "arbeitsblatt"], "gen": "clock", "def": {}},
+
+    {"id": "zahlenmauern", "nr": "", "name": "Zahlenmauern", "short": "3 bis 5 Stufen, mit Lösungsblatt", "desc": "Zahlenmauern zum Rechnen: Zwei Steine nebeneinander ergeben den Stein darüber. Unten vorgegeben, gemischt zum Knobeln oder leer.", "cat": "mathe", "grades": [1, 2, 3, 4], "tags": ["zahlenmauern", "zahlenmauer", "rechenmauer", "pyramide", "rechenpyramide", "mauer"], "gen": "wall", "def": {}},
+
+    {"id": "rechendreiecke", "nr": "", "name": "Rechendreiecke", "short": "innen die Zahlen, außen die Summen", "desc": "Rechendreiecke: Die beiden Innenfelder an einer Seite ergeben zusammen das Außenfeld. Vorgegeben, gemischt zum Knobeln oder leer.", "cat": "mathe", "grades": [1, 2, 3, 4], "tags": ["rechendreiecke", "rechendreieck", "dreieck", "knobeln"], "gen": "wall", "def": {"kind": "tri", "count": 4, "title": "Rechendreiecke"}},
+
     {"id": "einmaleins", "nr": "", "name": "Einmaleins-Tafel", "short": "bunt, mit Lücken oder leer zum Üben", "desc": "Die Einmaleins-Tafel in kindgerechten Farben und Schulschrift. Mit allen Ergebnissen, mit Lücken oder leer zum Ausfüllen.", "cat": "mathe", "grades": [2, 3], "tags": ["einmaleins", "1x1", "1 mal 1", "malnehmen", "multiplikation", "tabelle", "einmaleinstabelle"], "gen": "times", "def": {}},
 
     {"id": "einmaleins-reihen", "nr": "", "name": "Einmaleins-Reihen üben", "short": "Aufgaben zum Ausfüllen, auch gemischt", "desc": "Übungsblatt mit den Einmaleins-Reihen deiner Wahl: der Reihe nach oder gemischt, Malnehmen und Teilen, auf Wunsch mit Lösungsblatt.", "cat": "mathe", "grades": [2, 3], "tags": ["einmaleins", "1x1", "reihen", "übungsblatt", "arbeitsblatt", "teilen", "geteilt"], "gen": "rows", "def": {}},
@@ -101,7 +124,7 @@
 
     {"id": "sechsecke", "nr": "", "name": "Sechseckpapier", "short": "Waben zum Spielen und Basteln", "desc": "Sechsecke wie Bienenwaben, für Spielpläne, Muster und Chemie.", "cat": "kreativ", "grades": [], "tags": ["sechsecke", "hexagon", "waben", "spielplan"], "gen": "hex", "def": {}},
 
-    {"id": "storyboard", "nr": "", "name": "Storyboard", "short": "Bilder mit Zeilen darunter", "desc": "Felder für Bilder mit Schreibzeilen darunter, für Bildergeschichten, Filme und Präsentationen.", "cat": "kreativ", "grades": [1, 2, 3, 4, 5], "tags": ["storyboard", "bildergeschichte", "geschichte", "film"], "gen": "story", "def": {}},
+    {"id": "storyboard", "nr": "", "name": "Storyboard", "short": "Bilder mit Zeilen darunter", "desc": "Felder für Bilder mit Schreibzeilen darunter, für Bildergeschichten, Filme und Präsentationen.", "cat": "kreativ", "grades": [], "tags": ["storyboard", "bildergeschichte", "geschichte", "film"], "gen": "story", "def": {}},
 
     {"id": "comic", "nr": "", "name": "Comic-Vorlage", "short": "Panels zum Zeichnen", "desc": "Leere Comic-Panels in unterschiedlichen Breiten, zum Selberzeichnen.", "cat": "kreativ", "grades": [], "tags": ["comic", "manga", "panels", "zeichnen"], "gen": "story", "def": {"kind": "comic", "cols": 3, "rows": 4}},
 
@@ -127,9 +150,9 @@
 
     {"id": "druckertest", "nr": "", "name": "Druckertest", "short": "Druckt dein Drucker in Originalgröße?", "desc": "Ein Testblatt mit 10-cm-Linien zum Nachmessen und Rahmen, die zeigen, wie nah dein Drucker an die Blattkante kommt.", "cat": "spezial", "grades": [], "tags": ["druckertest", "test", "originalgröße", "100 prozent", "skalierung"], "gen": "test", "def": {}},
 
-    {"id": "baukasten", "nr": "", "name": "Papier-Baukasten", "short": "liniert, kariert, Punkte, Tabelle oder alles auf einem Blatt", "desc": "Dein eigenes Papier in einem Fenster: Art auswählen, einstellen, fertig. Bis zu drei Bereiche auf einem Blatt, zum Beispiel oben ein Kasten zum Malen und unten Lineatur 1.", "cat": "vorlagen", "grades": [], "tags": ["baukasten", "generator", "eigenes papier", "gestalten", "selber machen", "bereiche", "mischen", "tabelle", "vorlage"], "gen": "build", "def": {}},
+    {"id": "baukasten", "nr": "", "name": "Papier-Baukasten", "short": "liniert, kariert, Punkte, Tabelle oder alles auf einem Blatt", "desc": "Dein eigenes Papier in einem Fenster: Art auswählen, einstellen, fertig. Bis zu drei Bereiche auf einem Blatt, zum Beispiel oben ein Kasten zum Malen und unten Lineatur 1.", "cat": "alltag", "grades": [], "tags": ["baukasten", "generator", "eigenes papier", "gestalten", "selber machen", "bereiche", "mischen", "tabelle", "vorlage"], "gen": "build", "def": {}},
 
-    {"id": "tabelle", "nr": "", "name": "Tabelle nach Wunsch", "short": "Spalten, Zeilen und Titel selbst wählen", "desc": "Eine leere Tabelle mit so vielen Spalten und Zeilen, wie du brauchst, mit Kopfzeile und eigenen Spaltenbreiten.", "cat": "vorlagen", "grades": [], "tags": ["tabelle", "liste", "raster", "spalten"], "gen": "table", "def": {}},
+    {"id": "tabelle", "nr": "", "name": "Tabelle nach Wunsch", "short": "Spalten, Zeilen und Titel selbst wählen", "desc": "Eine leere Tabelle mit so vielen Spalten und Zeilen, wie du brauchst, mit Kopfzeile und eigenen Spaltenbreiten.", "cat": "alltag", "grades": [], "tags": ["tabelle", "liste", "raster", "spalten"], "gen": "table", "def": {}},
 
     {"id": "stundenplan", "nr": "", "name": "Stundenplan", "short": "Montag bis Freitag, 8 Stunden, bunt", "desc": "Ein Stundenplan zum Ausfüllen mit bunter Kopfzeile, Montag bis Freitag und 8 Stunden. Tage und Stunden lassen sich ändern.", "cat": "vorlagen", "grades": [1, 2, 3, 4, 5], "tags": ["stundenplan", "schule", "woche", "fächer"], "gen": "table", "def": {"ori": "q", "title": "Mein Stundenplan", "cols": 6, "widths": "1, 2, 2, 2, 2, 2", "heads": "Stunde, Montag, Dienstag, Mittwoch, Donnerstag, Freitag", "headScheme": "rainbow", "rows": 8, "rowLabels": "1., 2., 3., 4., 5., 6., 7., 8.", "rowH": 9}},
 
@@ -139,7 +162,7 @@
 
     {"id": "hausaufgaben", "nr": "", "name": "Hausaufgabenplan", "short": "Fach, Aufgabe, bis wann, erledigt", "desc": "Ein Plan für die Hausaufgaben mit Spalten für Fach, Aufgabe, Termin und ein Feld zum Abhaken.", "cat": "vorlagen", "grades": [2, 3, 4, 5], "tags": ["hausaufgaben", "hausaufgabenheft", "plan", "aufgaben"], "gen": "table", "def": {"title": "Hausaufgaben", "head": "name", "cols": 4, "widths": "2, 6, 2, 1.4", "heads": "Fach, Aufgabe, Bis wann?, Erledigt", "rowH": 11, "zebra": true}},
 
-    {"id": "wochenplan", "nr": "", "name": "Wochenplan", "short": "Montag bis Sonntag", "desc": "Ein Wochenplan mit einer Zeile pro Tag, für Termine, Übungen oder den Familienalltag.", "cat": "vorlagen", "grades": [], "tags": ["wochenplan", "woche", "termine", "planer"], "gen": "table", "def": {"title": "Wochenplan", "cols": 2, "widths": "1, 4", "thead": false, "rows": 7, "rowLabels": "Montag, Dienstag, Mittwoch, Donnerstag, Freitag, Samstag, Sonntag"}},
+    {"id": "wochenplan", "nr": "", "name": "Wochenplan", "short": "Montag bis Sonntag", "desc": "Ein Wochenplan mit einer Zeile pro Tag, für Termine, Übungen oder den Familienalltag.", "cat": "alltag", "grades": [], "tags": ["wochenplan", "woche", "termine", "planer"], "gen": "table", "def": {"title": "Wochenplan", "cols": 2, "widths": "1, 4", "thead": false, "rows": 7, "rowLabels": "Montag, Dienstag, Mittwoch, Donnerstag, Freitag, Samstag, Sonntag"}},
 
     {"id": "malen-schreiben-1", "nr": "", "name": "Malen und Schreiben (Lineatur 1)", "short": "oben malen, unten Lineatur 1", "desc": "Oben ein großer Kasten zum Malen, unten Lineatur 1 zum Schreiben. Ideal für die ersten Geschichten in Klasse 1.", "cat": "vorlagen", "grades": [1], "tags": ["malen und schreiben", "bild", "geschichte", "lineatur 1", "erste klasse", "bildergeschichte"], "gen": "build", "def": {"head": "name", "zones": 2, "z1_h": 45, "z1_type": "box", "z2_type": "lines", "z2_lines_sys": "four", "z2_lines_band": 5, "z2_lines_gap": 5, "z2_lines_kon": "gaps"}},
 
