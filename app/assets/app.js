@@ -309,36 +309,95 @@
             h('h1', null, mineEntry ? mineEntry.name : p.name, h('small', null, mineEntry ? p.name : p.short)), favBtn);
 
         /* --- Vorschau --- */
-        const pages = h('div', { class: 'pages', title: 'Antippen zum Vergrößern' });
-        const pvInfo = h('div', { class: 'pvinfo' });
-        const pv = h('div', { class: 'pv' }, pages, pvInfo);
-        pages.addEventListener('click', () => { pv.classList.toggle('big'); redraw(); });
+        const pages = h('div', { class: 'pages', title: 'Doppelt tippen zum Vergrößern' });
+        const pvInfo = h('span', { class: 'pvinfo' });
+        const zLbl = h('button', { class: 'zbtn zlbl', type: 'button', title: 'Ganze Seite zeigen', onclick: () => setZoom(1) }, '100 %');
+        const zoomBar = h('div', { class: 'zoombar' },
+            h('button', { class: 'zbtn', type: 'button', 'aria-label': 'Verkleinern', onclick: () => setZoom(zoom / 1.5) }, '−'), zLbl,
+            h('button', { class: 'zbtn', type: 'button', 'aria-label': 'Vergrößern', onclick: () => setZoom(zoom * 1.5) }, '+'));
+        const pv = h('div', { class: 'pv' }, pages, h('div', { class: 'pvbar' }, pvInfo, zoomBar));
+        /* Zoomen nur hier in der Vorschau: Doppeltippen, zwei Finger, Knöpfe, am Rechner auch Strg + Mausrad.
+           Der Punkt unter dem Finger bleibt dabei stehen. */
+        let zoom = 1, keep = null;
+        function setZoom(z, cx, cy) {
+            z = Math.min(6, Math.max(1, z));
+            if (Math.abs(z - zoom) < .01) return;
+            if (cx == null) { cx = pages.clientWidth / 2; cy = pages.clientHeight / 2; }
+            keep = { rx: (pages.scrollLeft + cx) / Math.max(1, pages.scrollWidth), ry: (pages.scrollTop + cy) / Math.max(1, pages.scrollHeight), cx, cy };
+            zoom = z;
+            redraw();
+        }
+        const local = (x, y) => { const r = pages.getBoundingClientRect(); return [x - r.left, y - r.top]; };
+        pages.addEventListener('dblclick', e => { e.preventDefault(); const [x, y] = local(e.clientX, e.clientY); setZoom(zoom > 1 ? 1 : 2.5, x, y); });
+        let lastTap = 0, pinch = null;
+        pages.addEventListener('touchend', e => {
+            if (pinch || e.touches.length) return;
+            const now = Date.now(), t = e.changedTouches[0];
+            if (now - lastTap < 320 && t) { e.preventDefault(); const [x, y] = local(t.clientX, t.clientY); setZoom(zoom > 1 ? 1 : 2.5, x, y); lastTap = 0; }
+            else lastTap = now;
+        });
+        const dist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+        pages.addEventListener('touchstart', e => {
+            if (e.touches.length === 2) {
+                const [x, y] = local((e.touches[0].clientX + e.touches[1].clientX) / 2, (e.touches[0].clientY + e.touches[1].clientY) / 2);
+                pinch = { d: dist(e.touches), z: zoom, x, y, s: 1 };
+            }
+        }, { passive: true });
+        pages.addEventListener('touchmove', e => {
+            if (!pinch || e.touches.length !== 2) return;
+            e.preventDefault();
+            pinch.s = Math.min(6 / pinch.z, Math.max(1 / pinch.z, dist(e.touches) / pinch.d));
+            for (const c of pages.querySelectorAll('canvas')) c.style.width = Math.round(+c.dataset.bw * pinch.z * pinch.s) + 'px';
+        }, { passive: false });
+        pages.addEventListener('touchend', e => {
+            if (!pinch || e.touches.length) return;
+            const pn = pinch;
+            pinch = null;
+            lastTap = 0;
+            for (const c of pages.querySelectorAll('canvas')) c.style.width = Math.round(+c.dataset.bw * zoom) + 'px';
+            setZoom(pn.z * pn.s, pn.x, pn.y);
+        });
+        pages.addEventListener('wheel', e => {
+            if (!e.ctrlKey) return;
+            e.preventDefault();
+            const [x, y] = local(e.clientX, e.clientY);
+            setZoom(zoom * Math.exp(-e.deltaY * .01), x, y);
+        }, { passive: false });
         let raf = 0, doc = null;
         function redraw() {
             cancelAnimationFrame(raf);
             raf = requestAnimationFrame(() => {
                 if (current !== me) return;
                 doc = BLPapers.build(p, o);
-                const big = pv.classList.contains('big'), n = doc.count, show = Math.min(n, big ? 4 : 2);
-                const avail = Math.max(200, pages.clientWidth - 4), dpr = Math.min(3, devicePixelRatio || 1);
-                const maxH = big ? Infinity : Math.max(260, Math.min(innerHeight - 230, innerWidth < 860 ? innerHeight * .5 : 900));
+                const big = zoom > 1, n = doc.count, show = Math.min(n, big ? 4 : 2);
+                pv.classList.toggle('big', big);
+                const avail = Math.max(160, pages.clientWidth - 4), dpr = Math.min(3, devicePixelRatio || 1);
+                const maxH = Math.max(240, Math.min(innerHeight - 230, innerWidth < 860 ? innerHeight * .5 : 900));
                 const cs = [];
                 for (let i = 0; i < show; i++) {
                     const sz = doc.size(i);
-                    let w = big ? avail * 1.6 : Math.min(avail / Math.min(show, 2) - (show > 1 ? 8 : 0), maxH * sz.w / sz.h);
+                    const bw = Math.min(avail / Math.min(show, 2) - (show > 1 ? 8 : 0), maxH * sz.w / sz.h);
+                    const w = bw * zoom, hh = w * sz.h / sz.w;
+                    // nicht mehr Bildpunkte, als das Gerät sicher schafft
+                    const d = Math.min(dpr, Math.sqrt(14e6 / (w * hh)));
                     const c = h('canvas');
-                    c.width = Math.round(w * dpr); c.height = Math.round(w * dpr * sz.h / sz.w);
+                    c.width = Math.round(w * d); c.height = Math.round(hh * d);
                     c.style.width = Math.round(w) + 'px';
+                    c.dataset.bw = bw;
                     const ctx = c.getContext('2d');
-                    ctx.scale(w * dpr / sz.w, w * dpr / sz.w);
+                    ctx.scale(w * d / sz.w, w * d / sz.w);
                     doc.draw(ctx, i);
                     cs.push(c);
                 }
                 pages.replaceChildren(...cs);
+                if (keep) {
+                    pages.scrollLeft = keep.rx * pages.scrollWidth - keep.cx;
+                    pages.scrollTop = keep.ry * pages.scrollHeight - keep.cy;
+                    keep = null;
+                }
+                zLbl.textContent = Math.round(zoom * 100) + ' %';
                 const sz = doc.size(0);
-                pvInfo.replaceChildren(
-                    h('span', null, (n === 1 ? '1 Seite' : n + ' Seiten') + ' · ' + fmtName(sz) + (n > show ? ' · Vorschau zeigt ' + show : '')),
-                    h('span', null, big ? 'Antippen zum Verkleinern' : 'Antippen zum Vergrößern'));
+                pvInfo.textContent = (n === 1 ? '1 Seite' : n + ' Seiten') + ' · ' + fmtName(sz) + (n > show ? ' · Vorschau zeigt ' + show : '');
             });
         }
         const fmtName = sz => {
@@ -702,6 +761,11 @@
         });
         if (standalone() && navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
     }
+
+    /* ---------- Kein Zoomen der ganzen Seite (die App passt sich dem Bildschirm an). Zoomen geht nur in der Vorschau. ---------- */
+    for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, e => { if (!e.target.closest || !e.target.closest('.pages')) e.preventDefault(); }, { passive: false });
+    document.addEventListener('touchmove', e => { if (e.touches.length > 1 && !(e.target.closest && e.target.closest('.pages'))) e.preventDefault(); }, { passive: false });
+    // Doppeltippen zoomt nicht, dafür sorgt touch-action: manipulation im CSS. So bleiben schnelle Tipps auf + und − möglich.
 
     /* ---------- Start ---------- */
     function start() {

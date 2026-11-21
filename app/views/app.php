@@ -12,7 +12,7 @@ $blCanon = blBaseUrl() . ($blPaper ? '?p=' . $blPaper['id'] : '');
 <html lang="de" data-v="<?= h(BL_VERSION) ?>">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title><?= h($blTitle) ?></title>
 <meta name="description" content="<?= h($blDesc) ?>">
 <link rel="canonical" href="<?= h($blCanon) ?>">
