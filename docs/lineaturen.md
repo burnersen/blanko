@@ -1,13 +1,9 @@
 # Lineaturen in blanko: Maße und Quellen
 
-Hier steht, nach welchen Maßen blanko die Schul-Lineaturen zeichnet und woher die Werte kommen.
-Grundlage ist die Norm **DIN 16552-1 „Lineaturen für Handschrift, Teil 1: Allgemeine Lineaturen“** (2005),
-so wie sie im Wikipedia-Artikel [Lineatur](https://de.wikipedia.org/wiki/Lineatur) wiedergegeben ist,
-dazu Angaben der Hersteller (vor allem [Brunnen](https://www.brunnen.de/schulhefte)) und von
-[familie.de](https://www.familie.de/testberichte/lineaturen-so-findet-ihr-das-richtige-heft-fuer-euer-schulkind--01GZRDJNST98W54VMBMP8X9VGQ).
-
-Die Norm selbst ist kostenpflichtig und war nicht direkt einsehbar. Wo Quellen sich widersprechen oder etwas fehlt,
-steht das unten bei **Annahmen**. Jeder Wert lässt sich in der App verstellen, und „Zurück zum Original“ stellt die Werte
+Hier steht, nach welchen Maßen blanko die Schul-Lineaturen zeichnet.
+blanko orientiert sich an der Norm **DIN 16552-1 „Lineaturen für Handschrift, Teil 1: Allgemeine Lineaturen“** (2005)
+und an handelsüblichen Schulheften. Das Normblatt selbst wurde nicht eingesehen, daher sind einige Werte Annahmen.
+Die stehen unten bei **Annahmen**. Jeder Wert lässt sich in der App verstellen, und „Zurück zum Original“ stellt die Werte
 aus dieser Tabelle wieder her.
 
 ## Begriffe
@@ -21,12 +17,12 @@ aus dieser Tabelle wieder her.
 
 | Lineatur | Klasse | Original | blanko zeichnet |
 |---|---|---|---|
-| SL | 1 | 4 Linien, 6 mm, Zeilen werden nach unten kleiner, Kontrast, A4 quer (Brunnen: „Liniensysteme in zwei Größen“) | obere Hälfte 6 mm, untere Hälfte 4 mm je Band, 5 mm Abstand, Kontrast |
+| SL | 1 | 4 Linien, 6 mm, Zeilen werden nach unten kleiner, Kontrast, A4 quer, Liniensysteme in zwei Größen | obere Hälfte 6 mm, untere Hälfte 4 mm je Band, 5 mm Abstand, Kontrast |
 | 0 | 1 | 4 Linien, „6-4“ mm, Kontrast, A5 quer | Bänder von 6 mm nach unten kleiner bis 4 mm, Kontrast, 2 × A5 quer auf A4 |
-| 1 | 1 | 4 Linien, je 5 mm, meist Kontrast; Brunnen: 14 Liniensysteme auf A4 | je 5 mm, 4,5 mm zwischen den Systemen, Kontrast |
+| 1 | 1 | 4 Linien, je 5 mm, meist Kontrast; im Handel 14 Liniensysteme auf A4 | je 5 mm, 4,5 mm zwischen den Systemen, Kontrast |
 | 1q | 1 | wie 1, A5 quer | wie 1, 2 × A5 quer auf A4 |
 | 2 | 2 | 4 Linien, je 4 mm, meist Kontrast | je 4 mm, 4 mm zwischen den Systemen, Kontrast |
-| 3 | 3 | 2 Linien, Abstand 3,5 mm; Brunnen: 21 Liniensysteme auf A4 | Mittelband 3,5 mm, 13 mm von Zeile zu Zeile |
+| 3 | 3 | 2 Linien, Abstand 3,5 mm; im Handel 21 Liniensysteme auf A4 | Mittelband 3,5 mm, 13 mm von Zeile zu Zeile |
 | 3R | 3 | wie 3, mit Rand an der Außenseite | wie 3, Rand rechts 15 mm |
 | VA | 1 | zwei Liniensysteme in einem: 10:10:10 mm und 5:5:5 mm | obere Hälfte 10 mm, untere Hälfte 5 mm je Band |
 
@@ -70,21 +66,21 @@ aus dieser Tabelle wieder her.
 
 ## Annahmen (nicht in den Quellen belegt)
 
-- **Abstand zwischen den 4-Linien-Systemen** (Lin 1, 2, SL, 0, VA): keine Quelle nennt ihn. Bei Lin 1 ergibt sich aus „14 Liniensysteme auf A4“ (Brunnen) etwa 4,5 mm.
-- **Zeilenabstand bei Lin 3** (13 mm): abgeleitet aus „21 Liniensysteme auf A4“ (Brunnen).
+- **Abstand zwischen den 4-Linien-Systemen** (Lin 1, 2, SL, 0, VA): keine Quelle nennt ihn. Bei Lin 1 ergibt sich aus 14 Liniensystemen auf A4 (handelsübliche Hefte) etwa 4,5 mm.
+- **Zeilenabstand bei Lin 3** (13 mm): abgeleitet aus 21 Liniensystemen auf A4 (handelsübliche Hefte).
 - **Zweite Größe bei SL** (4 mm) und **Verlauf bei Lin 0** (6 mm nach 4 mm): aus „6“ bzw. „6-4“ und „Zeilen werden nach unten kleiner“ gedeutet.
 - **Randbreiten** (15, 18 und 35 mm): nirgends angegeben, übliche Werte. Der Rand liegt bei blanko rechts, wahlweise links, beidseitig oder „außen“ für beidseitigen Druck.
 - **Kontrastfarbe:** keine Quelle nennt eine Farbe. blanko nimmt ein helles Grün, wählbar sind auch Gelb, Blau, Rosa, Lila und Grau.
 - **Punktabstand GR** (5 mm) und **Notenlinien 14** (2,5 mm): übliche Werte.
 
-## Widersprüche zwischen den Quellen
+## Abweichungen im Handel
 
-- **Lin 21 und 25A:** Wikipedia 9 mm, familie.de 10 mm. blanko folgt Wikipedia (DIN).
-- **Lin 23, 29, 39:** Wikipedia 5 × 9 mm, familie.de 7 × 5 mm. blanko folgt Wikipedia (DIN).
+- **Lin 21 und 25A:** Manche Hefte haben 10 mm statt 9 mm. blanko nimmt 9 mm (DIN).
+- **Lin 23, 29, 39:** Manche Hefte haben 7 × 5 mm statt 5 × 9 mm. blanko nimmt 5 × 9 mm (DIN).
 - **Formate:** Viele Lineaturen gibt es als Heft in A5 und A4 (zum Beispiel Lin 1, 2, 3, 7). Die Linien sind dabei gleich groß, nur das Blatt ist anders. blanko druckt auf A4, mit „2 × A5 auf A4“ als Auswahl.
 
 ## Bewusst nicht aufgenommen
 
-Diese Nummern tauchen bei Händlern auf, ihre Maße waren aber nicht sicher zu klären, oder es sind Hefte mit Vordrucken statt reiner Lineatur:
+Diese Nummern gibt es im Handel, ihre Maße waren aber nicht sicher zu klären, oder es sind Hefte mit Vordrucken statt reiner Lineatur:
 12 (Steno), 20, 24, 30, 51, 52, 53, 54, 1G bis 4G (Geschichtenhefte), 3V, 4V, 1F, 4F, SR1, dm, GS, A1, LA.
 Wer die genauen Maße kennt: gern als Issue auf GitHub melden, dann kommen sie dazu.

@@ -20,7 +20,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', '0');
 date_default_timezone_set('Europe/Berlin');
 
-define('BL_VERSION', '1.0.0');
+define('BL_VERSION', '1.0.1');
 define('BL_ROOT', __DIR__);
 define('BL_APP', BL_ROOT . '/app');
 define('BL_DATA_DIR', BL_ROOT . '/data');

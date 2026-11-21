@@ -15,7 +15,7 @@ Lineatur antippen, drucken, fertig. In Originalgröße, kostenlos, ohne Werbung,
 
 ## Was blanko kann
 
-- **Alle Schul-Lineaturen** nach DIN 16552-1: SL, 0, 1, 1q, 2, 3, 3R, VA, 4, 9, 21, 25, 25A, 27, R, ZL, 5, 7, 8f, 10, 22, 23, 26, 26A, 28, 29, 40, 47, GR, 6 und 14. Welche Maße genau und woher sie stammen, steht in [docs/lineaturen.md](docs/lineaturen.md).
+- **Alle Schul-Lineaturen**, orientiert an DIN 16552-1: SL, 0, 1, 1q, 2, 3, 3R, VA, 4, 9, 21, 25, 25A, 27, R, ZL, 5, 7, 8f, 10, 22, 23, 26, 26A, 28, 29, 40, 47, GR, 6 und 14. Welche Maße genau und woher sie stammen, steht in [docs/lineaturen.md](docs/lineaturen.md).
 - **Nach Klasse sortiert:** 1. bis 4. Klasse und ab Klasse 5, dazu eine Suche, die „3“, „Lin 3“ und „Lineatur 3“ versteht.
 - **Mathe-Hilfen:** bunte Einmaleins-Tafel (mit Lücken oder leer zum Üben), Einmaleins-Reihen als Übungsblatt mit Lösungsblatt, Hundertertafel, Zahlenstrahl, Stellenwerttafel, Koordinatensystem, Millimeterpapier. Ziffern in Schulschrift, wie Kinder sie lernen.
 - **Kreativ:** Punktraster, Isometrie, Dreiecke, Sechsecke, Storyboard, Comic, Kalligrafie, Handlettering.
