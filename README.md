@@ -95,6 +95,12 @@ Jedes Papier hat seine eigene Adresse (`?p=lin-3`), mit passendem Titel und Besc
 
 **Ein neues Papier dazu:** Eintrag in `catalog.json` mit einem vorhandenen Generator (`gen`) und eigenen Grundwerten (`def`). Für ganz neue Arten einen Generator in `papers.js` ergänzen.
 
+## ⚠️ Haftungsausschluss
+
+blanko ist kostenlose Hobby-Software und wird **so, wie es ist, ohne jede Gewähr** bereitgestellt. Es ist mit Sorgfalt gebaut und getestet, die Nutzung erfolgt aber **auf eigene Gefahr**.
+
+Wo diese Anleitung beschreibt, was blanko tut, prüft oder nie tut, steht dort, wie es gedacht und gebaut ist, keine Zusage und keine Garantie: Software kann Fehler haben, und Systeme, Dienste und andere Programme verhalten sich nicht immer wie erwartet. Soweit gesetzlich zulässig, haftet der Autor nicht für Schäden oder Datenverlust durch die Nutzung dieser Software. Siehe Abschnitte 15 und 16 der [Lizenz](LICENSE).
+
 ## Lizenz
 
 GNU Affero General Public License v3.0, siehe [LICENSE](LICENSE). © burnersen, [burnersen.de](https://burnersen.de)
